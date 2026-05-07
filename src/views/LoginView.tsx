@@ -1,0 +1,180 @@
+import { Trophy, Lock, Mail, AtSign, ArrowRight, Loader2 } from 'lucide-react'
+import { useAuth } from '@/contexts/AuthContext'
+
+export function LoginView() {
+  const {
+    authEmail, setAuthEmail, authStep, setAuthStep,
+    isLoginFlow, setIsLoginFlow,
+    userName, setUserName,
+    password, setPassword,
+    loginError,
+    handleEmailSubmit, handleRegisterSubmit,
+  } = useAuth()
+
+  return (
+    <div className="min-h-screen bg-zinc-50 flex flex-col items-center justify-center p-4 font-sans relative overflow-hidden">
+      <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-amber-300 rounded-full blur-[120px] opacity-30" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-emerald-300 rounded-full blur-[120px] opacity-30" />
+
+      <div className="bg-white/80 backdrop-blur-xl w-full max-w-md rounded-[2rem] shadow-2xl shadow-zinc-200/50 border border-white/50 p-8 relative z-10">
+        <div className="flex flex-col items-center text-center mb-8">
+          <div className="w-16 h-16 bg-gradient-to-br from-amber-100 to-amber-200 text-amber-600 rounded-2xl flex items-center justify-center mb-5 rotate-3 shadow-inner border border-amber-200/50">
+            <Trophy className="w-8 h-8" />
+          </div>
+          <h1 className="text-3xl font-black text-zinc-900 tracking-tight">Tracker Mundial</h1>
+          <p className="text-zinc-500 mt-2 font-medium">Gestiona tu colección y encuentra con quién intercambiar.</p>
+        </div>
+
+        {/* Login */}
+        {isLoginFlow && (
+          <form onSubmit={handleEmailSubmit} className="space-y-5 animate-in fade-in slide-in-from-bottom-4">
+            <div>
+              <label className="block text-sm font-bold text-zinc-700 mb-2">Email o Usuario</label>
+              <input
+                type="text"
+                required
+                placeholder="Ej: tu@email.com o usuario123"
+                className="w-full px-5 py-3.5 bg-zinc-100/50 border border-zinc-200 rounded-2xl focus:ring-4 focus:ring-amber-500/20 focus:border-amber-500 focus:bg-white outline-none transition-all font-medium text-zinc-900 placeholder:text-zinc-400"
+                value={authEmail}
+                onChange={e => setAuthEmail(e.target.value)}
+                disabled={authStep === 'loading'}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-zinc-700 mb-2">Contraseña</label>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <Lock className="h-5 w-5 text-zinc-400 group-focus-within:text-amber-500 transition-colors" />
+                </div>
+                <input
+                  type="password"
+                  required
+                  placeholder="Ingresa tu contraseña"
+                  className="w-full pl-11 pr-4 py-3.5 bg-zinc-100/50 border border-zinc-200 rounded-2xl focus:ring-4 focus:ring-amber-500/20 focus:border-amber-500 focus:bg-white outline-none transition-all font-medium text-zinc-900 placeholder:text-zinc-400"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  disabled={authStep === 'loading'}
+                />
+              </div>
+            </div>
+            {loginError && (
+              <p className="text-sm font-bold text-red-500 bg-red-50 border border-red-200 rounded-2xl px-4 py-3 text-center">{loginError}</p>
+            )}
+            <button
+              type="submit"
+              disabled={authStep === 'loading' || !authEmail.trim() || password.length < 6}
+              className="w-full bg-zinc-900 text-white font-bold py-3.5 px-4 rounded-2xl hover:bg-zinc-800 hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:bg-zinc-300 disabled:shadow-none disabled:transform-none"
+            >
+              {authStep === 'loading' ? (
+                <><Loader2 className="w-5 h-5 animate-spin" /> Verificando...</>
+              ) : (
+                <>Iniciar Sesión <ArrowRight className="w-4 h-4" /></>
+              )}
+            </button>
+            <div className="pt-3 text-center">
+              <p className="text-sm font-medium text-zinc-500">
+                ¿No tienes una cuenta?{' '}
+                <button
+                  type="button"
+                  onClick={() => { setIsLoginFlow(false); setAuthStep('register'); setAuthEmail(''); setPassword('') }}
+                  className="text-amber-600 font-bold hover:text-amber-700 transition-colors"
+                >
+                  Regístrate
+                </button>
+              </p>
+            </div>
+          </form>
+        )}
+
+        {/* Registro */}
+        {!isLoginFlow && (
+          <form onSubmit={handleRegisterSubmit} className="space-y-5 animate-in fade-in slide-in-from-right-4">
+            <div className="text-center mb-6">
+              <h2 className="text-2xl font-black text-zinc-900 tracking-tight">Crear Cuenta</h2>
+              <p className="text-sm text-zinc-500 mt-1 font-medium">Únete a la comunidad para intercambiar</p>
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-zinc-700 mb-2">Email</label>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <Mail className="h-5 w-5 text-zinc-400 group-focus-within:text-amber-500 transition-colors" />
+                </div>
+                <input
+                  type="email"
+                  required
+                  placeholder="tu@email.com"
+                  className="w-full pl-11 pr-4 py-3.5 bg-zinc-100/50 border border-zinc-200 rounded-2xl focus:ring-4 focus:ring-amber-500/20 focus:border-amber-500 focus:bg-white outline-none transition-all font-medium text-zinc-900 placeholder:text-zinc-400"
+                  value={authEmail}
+                  onChange={e => setAuthEmail(e.target.value)}
+                  disabled={authStep === 'loading'}
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-zinc-700 mb-2">Elige tu nombre de usuario</label>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <AtSign className="h-5 w-5 text-zinc-400 group-focus-within:text-amber-500 transition-colors" />
+                </div>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ej: coleccionista_vip"
+                  className="w-full pl-11 pr-4 py-3.5 bg-zinc-100/50 border border-zinc-200 rounded-2xl focus:ring-4 focus:ring-amber-500/20 focus:border-amber-500 focus:bg-white outline-none transition-all font-medium text-zinc-900 placeholder:text-zinc-400 lowercase"
+                  value={userName}
+                  onChange={e => setUserName(e.target.value.replace(/\s/g, ''))}
+                  disabled={authStep === 'loading'}
+                />
+              </div>
+              <p className="text-[11px] text-zinc-400 mt-2 ml-1">Este será tu identificador público. No puede contener espacios.</p>
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-zinc-700 mb-2">Crea una contraseña</label>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <Lock className="h-5 w-5 text-zinc-400 group-focus-within:text-amber-500 transition-colors" />
+                </div>
+                <input
+                  type="password"
+                  required
+                  placeholder="Mínimo 6 caracteres"
+                  className="w-full pl-11 pr-4 py-3.5 bg-zinc-100/50 border border-zinc-200 rounded-2xl focus:ring-4 focus:ring-amber-500/20 focus:border-amber-500 focus:bg-white outline-none transition-all font-medium text-zinc-900 placeholder:text-zinc-400"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  disabled={authStep === 'loading'}
+                />
+              </div>
+            </div>
+            <button
+              type="submit"
+              disabled={authStep === 'loading' || !userName.trim() || !authEmail.trim() || password.length < 6}
+              className="w-full bg-amber-500 text-white font-bold py-3.5 px-4 rounded-2xl hover:bg-amber-600 hover:shadow-lg hover:shadow-amber-500/20 hover:-translate-y-0.5 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:bg-zinc-300 disabled:shadow-none disabled:transform-none"
+            >
+              {authStep === 'loading' ? (
+                <><Loader2 className="w-5 h-5 animate-spin" /> Creando cuenta...</>
+              ) : 'Crear Cuenta'}
+            </button>
+            <div className="pt-3 text-center">
+              <p className="text-sm font-medium text-zinc-500">
+                ¿Ya tienes cuenta?{' '}
+                <button
+                  type="button"
+                  onClick={() => { setAuthStep('email'); setIsLoginFlow(true); setPassword('') }}
+                  className="text-amber-600 font-bold hover:text-amber-700 transition-colors"
+                >
+                  Inicia sesión
+                </button>
+              </p>
+            </div>
+          </form>
+        )}
+
+        <div className="pt-6 mt-6 border-t border-zinc-100 text-center">
+          <p className="text-[11px] font-medium text-zinc-400 uppercase tracking-widest">
+            Asegurado con <span className="font-black text-zinc-500">Supabase Auth</span>
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
