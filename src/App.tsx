@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useEffect } from 'react'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import { UIProvider, useUI } from '@/contexts/UIContext'
 import { useCelebration } from '@/hooks/useCelebration'
@@ -61,6 +61,10 @@ function AppShell() {
     chatHistory, isTyping,
     handleOpenChat, handleSendMessage,
   } = useChat(markConnectionRead, markConnectionUnread)
+
+  useEffect(() => {
+    if (isAuthenticated) setActiveChatUser(null)
+  }, [isAuthenticated, setActiveChatUser])
 
   const {
     groups, compareFilter, showCreateGroup, setShowCreateGroup,
