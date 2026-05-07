@@ -17,6 +17,8 @@ interface AuthContextValue {
   password: string
   setPassword: (v: string) => void
   loginError: string
+  lastSignupEmail: string | null
+  setLastSignupEmail: (v: string | null) => void
   handleEmailSubmit: (e: React.FormEvent) => void
   handleRegisterSubmit: (e: React.FormEvent) => void
   handleLogout: () => void
@@ -33,6 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [userName, setUserName] = useState('')
   const [password, setPassword] = useState('')
   const [loginError, setLoginError] = useState('')
+  const [lastSignupEmail, setLastSignupEmail] = useState<string | null>(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -81,8 +84,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!userName.trim() || password.length < 6 || !authEmail.trim()) return
     setAuthStep('loading')
 
+    const email = authEmail.trim()
     const { error } = await supabase.auth.signUp({
-      email: authEmail.trim(),
+      email,
       password,
       options: { data: { user_name: userName.trim() } },
     })
@@ -91,7 +95,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoginError(error.message)
       setAuthStep('register')
     } else {
+      setLastSignupEmail(email)
+      setIsLoginFlow(true)
       setAuthStep('email')
+      setAuthEmail('')
+      setUserName('')
       setPassword('')
     }
   }
@@ -110,7 +118,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAuthenticated, authInitialized,
       authEmail, setAuthEmail, authStep, setAuthStep,
       isLoginFlow, setIsLoginFlow, userName, setUserName, password, setPassword,
-      loginError, handleEmailSubmit, handleRegisterSubmit, handleLogout,
+      loginError, lastSignupEmail, setLastSignupEmail,
+      handleEmailSubmit, handleRegisterSubmit, handleLogout,
     }}>
       {children}
     </AuthContext.Provider>

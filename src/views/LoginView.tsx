@@ -1,4 +1,5 @@
-import { Trophy, Lock, Mail, AtSign, ArrowRight, Loader2 } from 'lucide-react'
+import { useRef, useEffect, useState } from 'react'
+import { Trophy, Lock, Mail, AtSign, ArrowRight, Loader2, CheckCircle2 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 
 export function LoginView() {
@@ -7,9 +8,20 @@ export function LoginView() {
     isLoginFlow, setIsLoginFlow,
     userName, setUserName,
     password, setPassword,
-    loginError,
+    loginError, lastSignupEmail, setLastSignupEmail,
     handleEmailSubmit, handleRegisterSubmit,
   } = useAuth()
+
+  const passwordRef = useRef<HTMLInputElement>(null)
+  const [signupSuccess, setSignupSuccess] = useState(false)
+
+  useEffect(() => {
+    if (!lastSignupEmail) return
+    setAuthEmail(lastSignupEmail)
+    setSignupSuccess(true)
+    setLastSignupEmail(null)
+    setTimeout(() => passwordRef.current?.focus(), 50)
+  }, [lastSignupEmail, setAuthEmail, setLastSignupEmail])
 
   return (
     <div className="min-h-screen bg-zinc-50 flex flex-col items-center justify-center p-4 font-sans relative overflow-hidden">
@@ -28,12 +40,18 @@ export function LoginView() {
         {/* Login */}
         {isLoginFlow && (
           <form onSubmit={handleEmailSubmit} className="space-y-5 animate-in fade-in slide-in-from-bottom-4">
+            {signupSuccess && (
+              <div className="flex items-start gap-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-medium px-4 py-3 rounded-2xl">
+                <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" strokeWidth={2.5} />
+                Cuenta creada. Revisá tu email para confirmar y luego iniciá sesión.
+              </div>
+            )}
             <div>
-              <label className="block text-sm font-bold text-zinc-700 mb-2">Email o Usuario</label>
+              <label className="block text-sm font-bold text-zinc-700 mb-2">Email</label>
               <input
                 type="text"
                 required
-                placeholder="Ej: tu@email.com o usuario123"
+                placeholder="tu@email.com"
                 className="w-full px-5 py-3.5 bg-zinc-100/50 border border-zinc-200 rounded-2xl focus:ring-4 focus:ring-amber-500/20 focus:border-amber-500 focus:bg-white outline-none transition-all font-medium text-zinc-900 placeholder:text-zinc-400"
                 value={authEmail}
                 onChange={e => setAuthEmail(e.target.value)}
@@ -47,6 +65,7 @@ export function LoginView() {
                   <Lock className="h-5 w-5 text-zinc-400 group-focus-within:text-amber-500 transition-colors" />
                 </div>
                 <input
+                  ref={passwordRef}
                   type="password"
                   required
                   placeholder="Ingresa tu contraseña"
@@ -76,7 +95,7 @@ export function LoginView() {
                 ¿No tienes una cuenta?{' '}
                 <button
                   type="button"
-                  onClick={() => { setIsLoginFlow(false); setAuthStep('register'); setAuthEmail(''); setPassword('') }}
+                  onClick={() => { setIsLoginFlow(false); setAuthStep('register'); setAuthEmail(''); setPassword(''); setSignupSuccess(false) }}
                   className="text-amber-600 font-bold hover:text-amber-700 transition-colors"
                 >
                   Regístrate
@@ -145,6 +164,9 @@ export function LoginView() {
                 />
               </div>
             </div>
+            {loginError && (
+              <p className="text-sm font-bold text-red-500 bg-red-50 border border-red-200 rounded-2xl px-4 py-3 text-center">{loginError}</p>
+            )}
             <button
               type="submit"
               disabled={authStep === 'loading' || !userName.trim() || !authEmail.trim() || password.length < 6}
