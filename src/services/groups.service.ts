@@ -122,3 +122,14 @@ export async function getCurrentUserEmail(): Promise<string | null> {
   const { data: { user } } = await supabase.auth.getUser()
   return user?.email?.toLowerCase() ?? null
 }
+
+export async function resolveUsernameToEmail(username: string): Promise<string | null> {
+  const { data, error } = await supabase.rpc('get_email_by_username', { p_username: username })
+  if (error || !data) return null
+  return data as string
+}
+
+export async function addMemberByEmail(groupId: string, email: string): Promise<{ error: string | null }> {
+  const { error } = await supabase.rpc('invite_to_group', { p_group_id: groupId, p_email: email })
+  return { error: error?.message ?? null }
+}

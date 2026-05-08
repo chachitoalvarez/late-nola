@@ -20,15 +20,13 @@ interface Props {
   setNewGroupName: (v: string) => void
   newGroupEmails: string
   setNewGroupEmails: (v: string) => void
-  manageEmails: string
-  setManageEmails: (v: string) => void
   isCreatingGroup: boolean
   createGroupError: string | null
   onFilterChange: (v: string) => void
   onCreateGroup: (e: React.FormEvent) => void
-  onAddMembers: (e: React.FormEvent) => void
   onRemoveMember: (email: string) => void
   onDeleteGroup: () => void
+  onRefresh: () => Promise<void>
   onClickUser: (user: LeaderboardEntry) => void
   onClickMe: () => void
 }
@@ -39,9 +37,8 @@ export function CompararView({
   isManagingGroup, setIsManagingGroup,
   newGroupName, setNewGroupName,
   newGroupEmails, setNewGroupEmails,
-  manageEmails, setManageEmails,
   isCreatingGroup, createGroupError,
-  onFilterChange, onCreateGroup, onAddMembers, onRemoveMember, onDeleteGroup,
+  onFilterChange, onCreateGroup, onRemoveMember, onDeleteGroup, onRefresh,
   onClickUser, onClickMe,
 }: Props) {
   return (
@@ -102,11 +99,9 @@ export function CompararView({
         <GroupManager
           group={activeGroupObj}
           currentUserEmail={currentUserEmail}
-          manageEmails={manageEmails}
-          setManageEmails={setManageEmails}
-          onAddMembers={onAddMembers}
           onRemoveMember={onRemoveMember}
           onDeleteGroup={onDeleteGroup}
+          onRefresh={onRefresh}
         />
       )}
 

@@ -13,7 +13,7 @@ export function useGroups() {
   const [isManagingGroup, setIsManagingGroup] = useState(false)
   const [newGroupName, setNewGroupName] = useState('')
   const [newGroupEmails, setNewGroupEmails] = useState('')
-  const [manageEmails, setManageEmails] = useState('')
+  const [manageEmails, setManageEmails] = useState('') // kept for legacy; unused by GroupManager
 
   const activeGroupObj = groups.find(g => g.id === compareFilter) ?? null
 
@@ -108,5 +108,6 @@ export function useGroups() {
     handleAddMembersToGroup,
     handleRemoveMember,
     handleDeleteGroup,
+    refresh,
   }
 }

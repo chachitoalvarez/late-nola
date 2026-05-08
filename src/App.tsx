@@ -71,10 +71,9 @@ function AppShell() {
     isManagingGroup, setIsManagingGroup,
     newGroupName, setNewGroupName,
     newGroupEmails, setNewGroupEmails,
-    manageEmails, setManageEmails,
     activeGroupObj,
-    handleFilterChange, handleCreateGroup, handleAddMembersToGroup,
-    handleRemoveMember, handleDeleteGroup,
+    handleFilterChange, handleCreateGroup,
+    handleRemoveMember, handleDeleteGroup, refresh: refreshGroups,
   } = useGroups()
 
   // TODO: load leaderboard entries from Supabase; for now only "me" is shown
@@ -179,15 +178,13 @@ function AppShell() {
                   setNewGroupName={setNewGroupName}
                   newGroupEmails={newGroupEmails}
                   setNewGroupEmails={setNewGroupEmails}
-                  manageEmails={manageEmails}
-                  setManageEmails={setManageEmails}
                   isCreatingGroup={isCreatingGroup}
                   createGroupError={createGroupError}
                   onFilterChange={handleFilterChange}
                   onCreateGroup={handleCreateGroup}
-                  onAddMembers={handleAddMembersToGroup}
                   onRemoveMember={handleRemoveMember}
                   onDeleteGroup={handleDeleteGroup}
+                  onRefresh={refreshGroups}
                   onClickUser={user => setSelectedPublicUser(user)}
                   onClickMe={() => setIsProfileOpen(true)}
                 />
