@@ -130,7 +130,7 @@ function AppShell() {
         )}
 
         <div className="space-y-4 sm:space-y-6 animate-in fade-in duration-500">
-          <div className={`bg-transparent sm:bg-white sm:rounded-[2rem] sm:shadow-sm sm:border sm:border-zinc-200/60 p-0 sm:p-6 overflow-hidden sm:overflow-visible${activeTab === 'detalle' ? ' -mt-4 sm:mt-0' : ''}`}>
+          <div className={`bg-transparent sm:bg-white sm:rounded-[2rem] sm:shadow-sm sm:border sm:border-zinc-200/60 p-0 sm:p-6 overflow-clip sm:overflow-visible${activeTab === 'detalle' ? ' -mt-4 sm:mt-0' : ''}`}>
             <DesktopTabs
               activeTab={activeTab}
               onTabChange={setTab}
