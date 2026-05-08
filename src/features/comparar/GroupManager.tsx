@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Settings, User, UserMinus, UserPlus, Trash2, Clock, AtSign } from 'lucide-react'
+import { Settings, User, UserPlus, Trash2, Clock, AtSign } from 'lucide-react'
 import * as groupsService from '@/services/groups.service'
 import type { Group } from '@/types/group'
 
@@ -129,7 +129,7 @@ export function GroupManager({ group, currentUserEmail, onRemoveMember, onDelete
                     onClick={() => onRemoveMember(member.email)}
                     className="text-zinc-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-xl transition-colors flex-shrink-0 active:scale-90"
                   >
-                    <UserMinus className="w-4 h-4" strokeWidth={2.5} />
+                    <Trash2 className="w-4 h-4" strokeWidth={2.5} />
                   </button>
                 )}
               </div>
