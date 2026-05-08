@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Plus, X, Settings, UsersRound } from 'lucide-react'
 import { LeaderboardList } from '@/features/comparar/LeaderboardList'
 import { GroupManager } from '@/features/comparar/GroupManager'
@@ -41,6 +42,13 @@ export function CompararView({
   onFilterChange, onCreateGroup, onRemoveMember, onDeleteGroup, onRefresh,
   onClickUser, onClickMe,
 }: Props) {
+  const ownerEmail = activeGroupObj?.members.find(m => m.userId === activeGroupObj.ownerId)?.email
+  const isGroupOwner = !!currentUserEmail && !!activeGroupObj && ownerEmail === currentUserEmail
+
+  useEffect(() => {
+    if (!isGroupOwner && isManagingGroup) setIsManagingGroup(false)
+  }, [isGroupOwner, isManagingGroup, setIsManagingGroup])
+
   return (
     <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
       <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center bg-white p-5 rounded-3xl border border-zinc-200/60 shadow-sm">
@@ -74,7 +82,7 @@ export function CompararView({
             </select>
           </div>
 
-          {compareFilter !== 'all' && activeGroupObj && (
+          {compareFilter !== 'all' && activeGroupObj && isGroupOwner && (
             <button
               onClick={() => { setIsManagingGroup(!isManagingGroup); setShowCreateGroup(false) }}
               className={`flex items-center justify-center gap-2 px-4 py-3 text-sm font-bold rounded-2xl transition-all w-full sm:w-auto active:scale-95 ${
