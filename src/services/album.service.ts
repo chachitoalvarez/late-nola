@@ -38,40 +38,39 @@ export async function getAlbumState(): Promise<{ data: AlbumSection[] | null; er
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { data: null, error: 'No hay sesión activa' }
 
-  const { data: row, error } = await supabase
+  // Migrate from localStorage for first-time Supabase users
+  let migratedCollected: CollectedMap = {}
+  try {
+    const stored = localStorage.getItem(LOCAL_STORAGE_KEY)
+    if (stored) {
+      const parsed: AlbumSection[] = JSON.parse(stored)
+      migratedCollected = toCollectedMap(parsed)
+    }
+  } catch { /* ignore */ }
+
+  const { uniqueCount, repeatedCount } = computeTotals(migratedCollected)
+
+  // ignoreDuplicates: true — creates row if missing, leaves existing row untouched
+  const { data: upserted, error: upsertErr } = await supabase
+    .from('user_album_state')
+    .upsert(
+      { user_id: user.id, collected: migratedCollected, unique_count: uniqueCount, repeated_count: repeatedCount, total_needed: TOTAL_NEEDED },
+      { onConflict: 'user_id', ignoreDuplicates: true }
+    )
+    .select('collected')
+    .single()
+
+  if (upserted) return { data: toAlbumData(upserted.collected as CollectedMap), error: null }
+
+  // ignoreDuplicates suppresses the return when row already existed — fetch it
+  const { data: existing, error: selectErr } = await supabase
     .from('user_album_state')
     .select('collected')
     .eq('user_id', user.id)
     .single()
 
-  // PGRST116 = no rows found — expected on first visit
-  if (error && error.code !== 'PGRST116') return { data: null, error: error.message }
-
-  if (row) return { data: toAlbumData(row.collected as CollectedMap), error: null }
-
-  // First visit — migrate from localStorage if data exists
-  let initialCollected: CollectedMap = {}
-  try {
-    const stored = localStorage.getItem(LOCAL_STORAGE_KEY)
-    if (stored) {
-      const parsed: AlbumSection[] = JSON.parse(stored)
-      initialCollected = toCollectedMap(parsed)
-    }
-  } catch { /* ignore */ }
-
-  const { uniqueCount, repeatedCount } = computeTotals(initialCollected)
-  const { error: insertErr } = await supabase
-    .from('user_album_state')
-    .insert({
-      user_id: user.id,
-      collected: initialCollected,
-      unique_count: uniqueCount,
-      repeated_count: repeatedCount,
-      total_needed: TOTAL_NEEDED,
-    })
-
-  if (insertErr) return { data: null, error: insertErr.message }
-  return { data: toAlbumData(initialCollected), error: null }
+  if (selectErr) return { data: null, error: upsertErr?.message ?? selectErr.message }
+  return { data: toAlbumData(existing.collected as CollectedMap), error: null }
 }
 
 export async function saveAlbumState(albumData: AlbumSection[]): Promise<{ error: string | null }> {

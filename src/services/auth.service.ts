@@ -22,11 +22,17 @@ export async function signIn(identifier: string, password: string): Promise<{ er
   return {}
 }
 
+export async function isUsernameAvailable(username: string): Promise<boolean> {
+  const { data, error } = await supabase.rpc('is_username_available', { p_username: username })
+  if (error) return true // fail open — uniqueness enforced by DB constraint
+  return !!data
+}
+
 export async function signUp(email: string, password: string, username: string) {
   return supabase.auth.signUp({
     email,
     password,
-    options: { data: { user_name: username } },
+    options: { data: { username } },
   })
 }
 

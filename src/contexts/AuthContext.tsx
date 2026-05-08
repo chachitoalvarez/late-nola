@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
 import { supabase } from '@/services/supabase'
-import { signIn } from '@/services/auth.service'
+import { signIn, isUsernameAvailable } from '@/services/auth.service'
 
 type AuthStep = 'email' | 'loading' | 'register'
 
@@ -41,7 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        setUserName(session.user.user_metadata?.user_name ?? session.user.email?.split('@')[0] ?? '')
+        setUserName(session.user.user_metadata?.username ?? session.user.email?.split('@')[0] ?? '')
         setIsAuthenticated(true)
       }
       setAuthInitialized(true)
@@ -49,7 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
-        setUserName(session.user.user_metadata?.user_name ?? session.user.email?.split('@')[0] ?? '')
+        setUserName(session.user.user_metadata?.username ?? session.user.email?.split('@')[0] ?? '')
         setIsAuthenticated(true)
       } else {
         setIsAuthenticated(false)
@@ -79,14 +79,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!userName.trim() || password.length < 6 || !authEmail.trim()) return
+    const trimmedUsername = userName.trim().toLowerCase()
+    if (!trimmedUsername || password.length < 6 || !authEmail.trim()) return
+
+    const usernameRegex = /^[a-z0-9_]{3,20}$/
+    if (!usernameRegex.test(trimmedUsername)) {
+      setLoginError('El usuario debe tener 3–20 caracteres: letras, números o guion bajo.')
+      return
+    }
+
     setAuthStep('loading')
+    const available = await isUsernameAvailable(trimmedUsername)
+    if (!available) {
+      setLoginError('Ese nombre de usuario ya está en uso. Elegí otro.')
+      setAuthStep('register')
+      return
+    }
 
     const email = authEmail.trim()
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { user_name: userName.trim() } },
+      options: { data: { username: trimmedUsername } },
     })
 
     if (error) {
