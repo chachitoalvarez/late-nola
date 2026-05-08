@@ -7,6 +7,7 @@ type AuthStep = 'email' | 'loading' | 'register'
 interface AuthContextValue {
   isAuthenticated: boolean
   authInitialized: boolean
+  sessionEmail: string
   authEmail: string
   setAuthEmail: (v: string) => void
   authStep: AuthStep
@@ -30,6 +31,7 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [authInitialized, setAuthInitialized] = useState(false)
+  const [sessionEmail, setSessionEmail] = useState('')
   const [authEmail, setAuthEmail] = useState('')
   const [authStep, setAuthStep] = useState<AuthStep>('email')
   const [isLoginFlow, setIsLoginFlow] = useState(true)
@@ -42,6 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         setUserName(session.user.user_metadata?.username ?? session.user.email?.split('@')[0] ?? '')
+        setSessionEmail(session.user.email ?? '')
         setIsAuthenticated(true)
       }
       setAuthInitialized(true)
@@ -50,8 +53,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
         setUserName(session.user.user_metadata?.username ?? session.user.email?.split('@')[0] ?? '')
+        setSessionEmail(session.user.email ?? '')
         setIsAuthenticated(true)
       } else {
+        setSessionEmail('')
         setIsAuthenticated(false)
       }
     })
@@ -128,6 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return (
     <AuthContext.Provider value={{
       isAuthenticated, authInitialized,
+      sessionEmail,
       authEmail, setAuthEmail, authStep, setAuthStep,
       isLoginFlow, setIsLoginFlow, userName, setUserName, password, setPassword,
       loginError, lastSignupEmail, setLastSignupEmail,

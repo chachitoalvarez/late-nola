@@ -29,7 +29,7 @@ import type { Tab } from '@/lib/constants'
 
 
 function AppShell() {
-  const { isAuthenticated, authInitialized, userName, setUserName, authEmail, handleLogout } = useAuth()
+  const { isAuthenticated, authInitialized, userName, setUserName, authEmail, sessionEmail, handleLogout } = useAuth()
   const {
     activeTab, setActiveTab,
     intercambiosTab, setIntercambiosTab,
@@ -160,7 +160,7 @@ function AppShell() {
                   isLoadingGroups={isLoadingGroups}
                   compareFilter={compareFilter}
                   activeGroupObj={activeGroupObj}
-                  currentUserEmail={authEmail || null}
+                  currentUserEmail={sessionEmail || null}
                   showCreateGroup={showCreateGroup}
                   setShowCreateGroup={setShowCreateGroup}
                   isManagingGroup={isManagingGroup}
