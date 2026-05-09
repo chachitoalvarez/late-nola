@@ -45,8 +45,10 @@ export function PublicProfileDrawer({ user, onClose, onProposeSwap }: Props) {
   const [matchState, setMatchState] = useState<MatchState>({ status: 'loading' })
 
   const loadMatch = useCallback(() => {
+    console.log('[PublicProfileDrawer] Fetching match for:', user.id)
     setMatchState({ status: 'loading' })
     getTradeMatch(String(user.id)).then(result => {
+      console.log('[PublicProfileDrawer] Got match result:', result)
       if (!result.ok) {
         setMatchState(
           result.reason === 'not_accessible'
