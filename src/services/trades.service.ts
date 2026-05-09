@@ -18,18 +18,26 @@ interface TradeCandidateRow {
   match_score: number
 }
 
-export async function getTradeMatch(otherUserId: string): Promise<{ data: TradeMatch | null; error: string | null }> {
+type TradeMatchResult =
+  | { ok: true; match: TradeMatch }
+  | { ok: false; reason: 'not_accessible' | 'unknown'; message: string }
+
+export async function getTradeMatch(otherUserId: string): Promise<TradeMatchResult> {
   const { data, error } = await supabase.rpc('get_trade_match', { p_other_user_id: otherUserId })
-  if (error) return { data: null, error: error.message }
+  if (error) {
+    console.error('[getTradeMatch]', error)
+    const reason = error.message?.includes('User not accessible') ? 'not_accessible' : 'unknown'
+    return { ok: false, reason, message: error.message }
+  }
   const row = data as TradeMatchRow
   return {
-    data: {
+    ok: true,
+    match: {
       theyOffer: row?.they_offer ?? {},
       iOffer: row?.i_offer ?? {},
       theyOfferCount: row?.they_offer_count ?? 0,
       iOfferCount: row?.i_offer_count ?? 0,
     },
-    error: null,
   }
 }
 

@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { X, User, RefreshCcw, Trophy, Package, Layers } from 'lucide-react'
+import { useEffect, useState, useCallback } from 'react'
+import { X, User, RefreshCcw, Trophy, Package, Layers, Lock, AlertCircle } from 'lucide-react'
 import { getTradeMatch } from '@/services/trades.service'
 import type { LeaderboardEntry } from '@/types/user'
 import type { TradeMatch } from '@/types/trade'
@@ -9,6 +9,12 @@ interface Props {
   onClose: () => void
   onProposeSwap: () => void
 }
+
+type MatchState =
+  | { status: 'loading' }
+  | { status: 'not_accessible' }
+  | { status: 'error'; message: string }
+  | { status: 'ok'; match: TradeMatch }
 
 function sectionAbbr(section: string) {
   return section.slice(0, 3).toUpperCase()
@@ -36,20 +42,27 @@ export function PublicProfileDrawer({ user, onClose, onProposeSwap }: Props) {
   const repeated = user.repeated ?? 0
   const percentage = needed > 0 ? Math.round((completed / needed) * 100) : 0
 
-  const [tradeMatch, setTradeMatch] = useState<TradeMatch | null>(null)
-  const [isLoadingMatch, setIsLoadingMatch] = useState(true)
+  const [matchState, setMatchState] = useState<MatchState>({ status: 'loading' })
 
-  useEffect(() => {
-    setIsLoadingMatch(true)
-    setTradeMatch(null)
-    getTradeMatch(String(user.id)).then(({ data }) => {
-      setTradeMatch(data)
-      setIsLoadingMatch(false)
+  const loadMatch = useCallback(() => {
+    setMatchState({ status: 'loading' })
+    getTradeMatch(String(user.id)).then(result => {
+      if (!result.ok) {
+        setMatchState(
+          result.reason === 'not_accessible'
+            ? { status: 'not_accessible' }
+            : { status: 'error', message: result.message }
+        )
+      } else {
+        setMatchState({ status: 'ok', match: result.match })
+      }
     })
   }, [user.id])
 
-  const noMatch = !isLoadingMatch && tradeMatch !== null &&
-    tradeMatch.theyOfferCount === 0 && tradeMatch.iOfferCount === 0
+  useEffect(() => { loadMatch() }, [loadMatch])
+
+  const noMatch = matchState.status === 'ok' &&
+    matchState.match.theyOfferCount === 0 && matchState.match.iOfferCount === 0
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-zinc-900/60 backdrop-blur-sm animate-in fade-in">
@@ -94,7 +107,8 @@ export function PublicProfileDrawer({ user, onClose, onProposeSwap }: Props) {
 
         {/* Sección 3 — Cruce de figuritas */}
         <div className="flex-1 overflow-y-auto min-h-0 scrollbar-hide bg-white">
-          {isLoadingMatch && (
+
+          {matchState.status === 'loading' && (
             <div className="p-5 space-y-3">
               {[...Array(3)].map((_, i) => (
                 <div key={i} className="h-8 bg-zinc-100 rounded-xl animate-pulse" />
@@ -102,41 +116,65 @@ export function PublicProfileDrawer({ user, onClose, onProposeSwap }: Props) {
             </div>
           )}
 
-          {!isLoadingMatch && noMatch && (
+          {matchState.status === 'not_accessible' && (
+            <div className="flex flex-col items-center justify-center text-center p-8 h-full gap-3">
+              <Lock className="w-8 h-8 text-zinc-300" strokeWidth={1.5} />
+              <p className="text-sm font-medium text-zinc-500 max-w-[260px]">
+                Este coleccionista mantiene su perfil privado. Solo es visible si compartís un grupo con él.
+              </p>
+            </div>
+          )}
+
+          {matchState.status === 'error' && (
+            <div className="p-5">
+              <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-2xl p-4">
+                <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" strokeWidth={2.5} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-red-700">No pudimos cargar las figuritas para intercambiar.</p>
+                  <button
+                    onClick={loadMatch}
+                    className="text-xs font-bold text-red-600 underline mt-1 hover:text-red-800 transition-colors"
+                  >
+                    Intentá de nuevo
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {matchState.status === 'ok' && noMatch && (
             <div className="flex flex-col items-center justify-center text-center p-8 h-full">
               <Trophy className="w-10 h-10 mb-3 text-zinc-300" strokeWidth={1.5} />
               <p className="text-sm font-medium text-zinc-500">No hay cruce de figuritas con este coleccionista por ahora.</p>
             </div>
           )}
 
-          {!isLoadingMatch && !noMatch && tradeMatch && (
+          {matchState.status === 'ok' && !noMatch && (
             <div className="p-5 space-y-4">
-              {/* Te sirven de él */}
               <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4">
                 <div className="flex items-center gap-2 mb-1">
                   <Package className="w-4 h-4 text-amber-600" strokeWidth={2.5} />
                   <span className="text-sm font-black text-amber-900">Te sirven</span>
                   <span className="ml-auto text-xs font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
-                    {tradeMatch.theyOfferCount}
+                    {matchState.match.theyOfferCount}
                   </span>
                 </div>
-                {tradeMatch.theyOfferCount > 0
-                  ? <TradeChips offer={tradeMatch.theyOffer} palette="amber" />
+                {matchState.match.theyOfferCount > 0
+                  ? <TradeChips offer={matchState.match.theyOffer} palette="amber" />
                   : <p className="text-xs text-amber-700/60 mt-2">Nada de lo que tiene te sirve.</p>
                 }
               </div>
 
-              {/* Tenés para él */}
               <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4">
                 <div className="flex items-center gap-2 mb-1">
                   <Layers className="w-4 h-4 text-blue-600" strokeWidth={2.5} />
                   <span className="text-sm font-black text-blue-900">Tenés para él</span>
                   <span className="ml-auto text-xs font-bold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
-                    {tradeMatch.iOfferCount}
+                    {matchState.match.iOfferCount}
                   </span>
                 </div>
-                {tradeMatch.iOfferCount > 0
-                  ? <TradeChips offer={tradeMatch.iOffer} palette="blue" />
+                {matchState.match.iOfferCount > 0
+                  ? <TradeChips offer={matchState.match.iOffer} palette="blue" />
                   : <p className="text-xs text-blue-700/60 mt-2">Nada de tus repetidas le sirve.</p>
                 }
               </div>
