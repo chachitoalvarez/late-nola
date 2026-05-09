@@ -1,6 +1,8 @@
 import { useEffect, useState, useCallback } from 'react'
-import { X, User, RefreshCcw, Trophy, Package, Layers, Lock, AlertCircle } from 'lucide-react'
+import { X, User, RefreshCcw, Trophy, Package, Lock, AlertCircle } from 'lucide-react'
 import { getTradeMatch } from '@/services/trades.service'
+import { TradeStickerGroup } from '@/features/intercambios/TradeStickerGroup'
+import { TradeBalanceBar } from '@/features/intercambios/TradeBalanceBar'
 import type { LeaderboardEntry } from '@/types/user'
 import type { TradeMatch } from '@/types/trade'
 
@@ -15,26 +17,6 @@ type MatchState =
   | { status: 'not_accessible' }
   | { status: 'error'; message: string }
   | { status: 'ok'; match: TradeMatch }
-
-function sectionAbbr(section: string) {
-  return section.slice(0, 3).toUpperCase()
-}
-
-function TradeChips({ offer, palette }: { offer: Record<string, Record<string, number>>; palette: 'amber' | 'blue' }) {
-  const chips = Object.entries(offer).flatMap(([section, stickers]) =>
-    Object.entries(stickers).map(([num, count]) => ({ label: `${sectionAbbr(section)}-${num}`, count }))
-  )
-  const border = palette === 'amber' ? 'border-amber-200 text-amber-800' : 'border-blue-200 text-blue-800'
-  return (
-    <div className="mt-3 flex flex-wrap gap-2">
-      {chips.map(({ label, count }) => (
-        <span key={label} className={`bg-white border ${border} text-xs font-bold px-2.5 py-1.5 rounded-lg shadow-sm`}>
-          {label}{count > 1 && <span className="text-[9px] opacity-60 ml-0.5">×{count}</span>}
-        </span>
-      ))}
-    </div>
-  )
-}
 
 export function PublicProfileDrawer({ user, onClose, onProposeSwap }: Props) {
   const completed = user.completed ?? 0
@@ -152,34 +134,69 @@ export function PublicProfileDrawer({ user, onClose, onProposeSwap }: Props) {
           )}
 
           {matchState.status === 'ok' && !noMatch && (
-            <div className="p-5 space-y-4">
-              <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4">
-                <div className="flex items-center gap-2 mb-1">
-                  <Package className="w-4 h-4 text-amber-600" strokeWidth={2.5} />
-                  <span className="text-sm font-black text-amber-900">Te sirven</span>
-                  <span className="ml-auto text-xs font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
-                    {matchState.match.theyOfferCount}
-                  </span>
-                </div>
-                {matchState.match.theyOfferCount > 0
-                  ? <TradeChips offer={matchState.match.theyOffer} palette="amber" />
-                  : <p className="text-xs text-amber-700/60 mt-2">Nada de lo que tiene te sirve.</p>
-                }
-              </div>
+            <div className="p-4 space-y-4">
 
-              <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4">
-                <div className="flex items-center gap-2 mb-1">
-                  <Layers className="w-4 h-4 text-blue-600" strokeWidth={2.5} />
-                  <span className="text-sm font-black text-blue-900">Tenés para él</span>
-                  <span className="ml-auto text-xs font-bold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
-                    {matchState.match.iOfferCount}
-                  </span>
-                </div>
-                {matchState.match.iOfferCount > 0
-                  ? <TradeChips offer={matchState.match.iOffer} palette="blue" />
-                  : <p className="text-xs text-blue-700/60 mt-2">Nada de tus repetidas le sirve.</p>
-                }
-              </div>
+              {matchState.match.theyOfferCount > 0 && (
+                <section className="space-y-2">
+                  <div className="flex items-center justify-between px-1">
+                    <div className="flex items-center gap-2">
+                      <Package className="w-4 h-4 text-amber-600" strokeWidth={2.5} />
+                      <h3 className="text-xs font-black text-amber-900 uppercase tracking-wider">Te sirven</h3>
+                    </div>
+                    <span className="text-[11px] font-black text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
+                      {matchState.match.theyOfferCount} {matchState.match.theyOfferCount === 1 ? 'figurita' : 'figuritas'}
+                    </span>
+                  </div>
+                  <div className="space-y-1.5 bg-amber-50/40 border border-amber-100 rounded-2xl p-1.5">
+                    {Object.entries(matchState.match.theyOffer)
+                      .sort(([a], [b]) => a.localeCompare(b))
+                      .map(([section, stickers], idx) => (
+                        <TradeStickerGroup
+                          key={section}
+                          sectionName={section}
+                          stickers={stickers as Record<string, number>}
+                          variant="theyOffer"
+                          defaultOpen={idx === 0}
+                        />
+                      ))
+                    }
+                  </div>
+                </section>
+              )}
+
+              {matchState.match.iOfferCount > 0 && (
+                <section className="space-y-2">
+                  <div className="flex items-center justify-between px-1">
+                    <div className="flex items-center gap-2">
+                      <RefreshCcw className="w-4 h-4 text-blue-600" strokeWidth={2.5} />
+                      <h3 className="text-xs font-black text-blue-900 uppercase tracking-wider">Tenés para él</h3>
+                    </div>
+                    <span className="text-[11px] font-black text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full">
+                      {matchState.match.iOfferCount} {matchState.match.iOfferCount === 1 ? 'figurita' : 'figuritas'}
+                    </span>
+                  </div>
+                  <div className="space-y-1.5 bg-blue-50/40 border border-blue-100 rounded-2xl p-1.5">
+                    {Object.entries(matchState.match.iOffer)
+                      .sort(([a], [b]) => a.localeCompare(b))
+                      .map(([section, stickers], idx) => (
+                        <TradeStickerGroup
+                          key={section}
+                          sectionName={section}
+                          stickers={stickers as Record<string, number>}
+                          variant="iOffer"
+                          defaultOpen={idx === 0}
+                        />
+                      ))
+                    }
+                  </div>
+                </section>
+              )}
+
+              <TradeBalanceBar
+                theyCount={matchState.match.theyOfferCount}
+                iCount={matchState.match.iOfferCount}
+              />
+
             </div>
           )}
         </div>
