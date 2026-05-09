@@ -52,7 +52,10 @@ export async function getTradeMatch(otherUserId: string): Promise<TradeMatchResu
 
 export async function getTradeCandidates(limit = 20): Promise<{ data: TradeCandidate[]; error: string | null }> {
   const { data, error } = await supabase.rpc('get_trade_candidates', { p_limit: limit })
-  if (error) return { data: [], error: error.message }
+  if (error) {
+    console.error('[getTradeCandidates] ERROR:', { message: error.message, details: error.details, hint: error.hint, code: error.code })
+    return { data: [], error: error.message }
+  }
   const rows = (data ?? []) as TradeCandidateRow[]
   return {
     data: rows.map(r => ({
