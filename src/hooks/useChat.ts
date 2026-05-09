@@ -3,8 +3,8 @@ import type { Connection } from '@/types/trade'
 import type { ChatHistory } from '@/types/chat'
 
 export function useChat(
-  markConnectionRead: (userId: number) => void,
-  markConnectionUnread: (userId: number) => void
+  markConnectionRead: (userId: string | number) => void,
+  markConnectionUnread: (userId: string | number) => void
 ) {
   const [activeChatUser, setActiveChatUser] = useState<Connection | null>(null)
   const [chatMessage, setChatMessage] = useState('')
@@ -19,7 +19,7 @@ export function useChat(
       setChatHistory(prev => ({
         ...prev,
         [user.id]: [
-          { sender: 'system', text: 'Para tu seguridad, te recomendamos realizar los intercambios en lugares públicos y en horarios diurnos. Nunca transfieras dinero por adelantado ni compartas datos bancarios.' },
+          { sender: 'system' as const, text: 'Para tu seguridad, te recomendamos realizar los intercambios en lugares públicos y en horarios diurnos. Nunca transfieras dinero por adelantado ni compartas datos bancarios.' },
         ],
       }))
     }
@@ -35,7 +35,7 @@ export function useChat(
       ...prev,
       [activeChatUser.id]: [
         ...(prev[activeChatUser.id] ?? []),
-        { sender: 'me', text: chatMessage, time: currentTime },
+        { sender: 'me' as const, text: chatMessage, time: currentTime },
       ],
     }))
     setChatMessage('')

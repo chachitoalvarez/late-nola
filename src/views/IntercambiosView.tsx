@@ -1,4 +1,4 @@
-import { Heart } from 'lucide-react'
+import { Heart, Loader2 } from 'lucide-react'
 import { IntercambiosTabs } from '@/features/intercambios/IntercambiosTabs'
 import { SwipeableCard } from '@/features/intercambios/SwipeableCard'
 import { ConnectionCard } from '@/features/intercambios/ConnectionCard'
@@ -12,6 +12,7 @@ interface Props {
   intercambiosTab: IntercambiosTab
   setIntercambiosTab: (tab: IntercambiosTab) => void
   currentTradeUser: TradeUser | null
+  isLoadingCandidates: boolean
   showMatchAnimation: boolean
   connections: Connection[]
   likedByMe: TradeUser[]
@@ -25,7 +26,7 @@ interface Props {
 
 export function IntercambiosView({
   intercambiosTab, setIntercambiosTab,
-  currentTradeUser, showMatchAnimation,
+  currentTradeUser, isLoadingCandidates, showMatchAnimation,
   connections, likedByMe, likedByThem, unreadConnectionsCount,
   onSwipe, onOpenChat, onAcceptLike, onRejectLike,
 }: Props) {
@@ -41,7 +42,14 @@ export function IntercambiosView({
       {/* Explorar */}
       {intercambiosTab === 'explorar' && (
         <div className="w-full max-w-[360px] mx-auto mt-2">
-          <SwipeableCard user={currentTradeUser} showMatchAnimation={showMatchAnimation} onSwipe={onSwipe} />
+          {isLoadingCandidates ? (
+            <div className="flex flex-col items-center justify-center min-h-[640px] gap-3 text-zinc-400">
+              <Loader2 className="w-8 h-8 animate-spin" strokeWidth={2} />
+              <p className="text-sm font-medium">Buscando coleccionistas...</p>
+            </div>
+          ) : (
+            <SwipeableCard user={currentTradeUser} showMatchAnimation={showMatchAnimation} onSwipe={onSwipe} />
+          )}
         </div>
       )}
 

@@ -50,7 +50,7 @@ function AppShell() {
 
   const {
     likedByMe, likedByThem, connections, showMatchAnimation,
-    currentTradeUser, unreadConnectionsCount,
+    currentTradeUser, isLoadingCandidates, unreadConnectionsCount,
     handleSwipe, handleAcceptLike, handleRejectLike,
     markConnectionRead, markConnectionUnread,
   } = useTrades(triggerCelebration)
@@ -186,6 +186,7 @@ function AppShell() {
                   intercambiosTab={intercambiosTab}
                   setIntercambiosTab={setIntercambiosTab}
                   currentTradeUser={currentTradeUser}
+                  isLoadingCandidates={isLoadingCandidates}
                   showMatchAnimation={showMatchAnimation}
                   connections={connections}
                   likedByMe={likedByMe}

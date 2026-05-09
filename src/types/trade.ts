@@ -1,5 +1,5 @@
 export interface TradeUser {
-  id: number
+  id: string | number
   name: string
   distance: string
   hasForYou: number
@@ -10,4 +10,21 @@ export interface TradeUser {
 export interface Connection extends TradeUser {
   isNew: boolean
   hasUnread: boolean
+}
+
+export interface TradeMatch {
+  theyOffer: Record<string, Record<string, number>>
+  iOffer: Record<string, Record<string, number>>
+  theyOfferCount: number
+  iOfferCount: number
+}
+
+export interface TradeCandidate {
+  userId: string
+  username: string
+  uniqueCount: number
+  percentage: number
+  theyOfferCount: number
+  iOfferCount: number
+  matchScore: number
 }

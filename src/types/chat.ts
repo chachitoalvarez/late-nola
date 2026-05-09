@@ -4,4 +4,4 @@ export interface ChatMessage {
   time?: string
 }
 
-export type ChatHistory = Record<number, ChatMessage[]>
+export type ChatHistory = Record<string, ChatMessage[]>

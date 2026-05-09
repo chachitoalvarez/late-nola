@@ -15,7 +15,7 @@ export function SwipeableCard({ user, showMatchAnimation, onSwipe }: Props) {
           <Search className="w-10 h-10 text-zinc-400" strokeWidth={2.5} />
         </div>
         <h3 className="text-2xl font-black text-zinc-800 tracking-tight">¡Eso es todo!</h3>
-        <p className="text-zinc-500 font-medium mt-3 leading-relaxed">No hay más perfiles cerca. Vuelve más tarde o revisa tus matches actuales.</p>
+        <p className="text-zinc-500 font-medium mt-3 leading-relaxed">Todavía no hay coleccionistas con cruce con tu álbum. Volvé después de pegar más figuritas.</p>
       </div>
     )
   }
