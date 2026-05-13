@@ -1,4 +1,5 @@
 import { supabase } from '@/services/supabase'
+import { formatUsername } from '@/lib/username'
 import type { LeaderboardEntry } from '@/types/user'
 
 interface LeaderboardRow {
@@ -18,7 +19,7 @@ async function getCurrentUserId(): Promise<string | null> {
 function rowToEntry(row: LeaderboardRow, currentUserId: string | null): LeaderboardEntry {
   return {
     id: row.user_id,
-    name: row.username ?? `#${row.user_id.slice(-4)}`,
+    name: formatUsername(row.username) || `#${row.user_id.slice(-4)}`,
     email: '',
     completed: row.unique_count,
     needed: row.total_needed,

@@ -12,11 +12,11 @@ const TAB_META: Record<Tab, { icon: React.ReactNode; label: string }> = {
 interface Props {
   activeTab: Tab
   userName: string
-  unlockedAchievementsCount: number
+  notificationsCount: number
   onProfileOpen: () => void
 }
 
-export function ContextualHeader({ activeTab, userName, unlockedAchievementsCount, onProfileOpen }: Props) {
+export function ContextualHeader({ activeTab, userName, notificationsCount, onProfileOpen }: Props) {
   const meta = TAB_META[activeTab]
 
   return (
@@ -36,9 +36,9 @@ export function ContextualHeader({ activeTab, userName, unlockedAchievementsCoun
         </div>
         <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-amber-100 to-amber-50 border-2 border-white shadow-md flex items-center justify-center flex-shrink-0 relative">
           <User className="w-5 h-5 sm:w-6 sm:h-6 text-amber-600" />
-          {unlockedAchievementsCount > 0 && (
+          {notificationsCount > 0 && (
             <div className="absolute -bottom-1 -right-1 bg-amber-500 text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-white shadow-sm">
-              {unlockedAchievementsCount}
+              {notificationsCount}
             </div>
           )}
         </div>

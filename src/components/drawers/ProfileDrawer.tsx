@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { X, User, Edit2, Mail, Bell, Shield, LogOut, Check } from 'lucide-react'
 import * as profilesService from '@/services/profiles.service'
+import { formatUsername } from '@/lib/username'
 import type { AlbumStats } from '@/types/album'
 
 interface Props {
@@ -58,7 +59,7 @@ export function ProfileDrawer({
               <input
                 type="text"
                 value={userName}
-                onChange={e => setUserName(e.target.value)}
+                onChange={e => setUserName(formatUsername(e.target.value))}
                 className="text-base font-black text-zinc-900 bg-transparent border-b border-transparent hover:border-zinc-200 focus:border-amber-500 focus:outline-none transition-colors pb-0.5 tracking-tight w-full truncate"
               />
               <Edit2 className="w-3 h-3 text-zinc-300 absolute right-1 top-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" strokeWidth={3} />

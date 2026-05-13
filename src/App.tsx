@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import { UIProvider, useUI } from '@/contexts/UIContext'
 import { useCelebration } from '@/hooks/useCelebration'
@@ -28,7 +28,7 @@ import type { Tab } from '@/lib/constants'
 
 
 function AppShell() {
-  const { isAuthenticated, authInitialized, userName, setUserName, authEmail, sessionEmail, handleLogout } = useAuth()
+  const { isAuthenticated, authInitialized, sessionUserId, userName, setUserName, authEmail, sessionEmail, handleLogout } = useAuth()
   const {
     activeTab, setActiveTab,
     intercambiosTab, setIntercambiosTab,
@@ -47,6 +47,11 @@ function AppShell() {
   } = useAlbum(triggerCelebration)
 
   const { achievements, unlockedCount } = useAchievements(albumData, stats, isLoadingAlbum, triggerCelebration)
+  const seenAchievementsKey = useMemo(
+    () => sessionUserId ? `tracker-mundial-seen-achievements-${sessionUserId}` : '',
+    [sessionUserId],
+  )
+  const [seenAchievementsCount, setSeenAchievementsCount] = useState(0)
 
   const {
     likedByMe, likedByThem, connections, showMatchAnimation,
@@ -59,6 +64,21 @@ function AppShell() {
   useEffect(() => {
     if (isAuthenticated) closeChat()
   }, [isAuthenticated, closeChat])
+
+  useEffect(() => {
+    if (!seenAchievementsKey) {
+      setSeenAchievementsCount(0)
+      return
+    }
+    const storedCount = Number(window.localStorage.getItem(seenAchievementsKey) ?? '0')
+    setSeenAchievementsCount(Number.isFinite(storedCount) ? storedCount : 0)
+  }, [seenAchievementsKey])
+
+  useEffect(() => {
+    if (activeTab !== 'logros' || !seenAchievementsKey || isLoadingAlbum) return
+    window.localStorage.setItem(seenAchievementsKey, String(unlockedCount))
+    setSeenAchievementsCount(unlockedCount)
+  }, [activeTab, isLoadingAlbum, seenAchievementsKey, unlockedCount])
 
   const {
     groups, isLoadingGroups, isCreatingGroup, createGroupError,
@@ -77,6 +97,7 @@ function AppShell() {
   if (!isAuthenticated) return <LoginView />
 
   const intercambiosBadge = likedByThem.length + unreadConnectionsCount
+  const logrosBadge = Math.max(unlockedCount - seenAchievementsCount, 0)
   const setTab = (tab: Tab) => setActiveTab(tab)
   const goToDetail = (section: string) => handleGoToDetail(section, setTab)
 
@@ -105,7 +126,7 @@ function AppShell() {
         <ContextualHeader
           activeTab={activeTab}
           userName={userName}
-          unlockedAchievementsCount={unlockedCount}
+          notificationsCount={logrosBadge}
           onProfileOpen={() => setIsProfileOpen(true)}
         />
 
@@ -115,7 +136,7 @@ function AppShell() {
               activeTab={activeTab}
               onTabChange={setTab}
               intercambiosBadge={intercambiosBadge}
-              logrosBadge={unlockedCount}
+              logrosBadge={logrosBadge}
             />
 
             <div className="p-0">
@@ -203,7 +224,7 @@ function AppShell() {
           activeTab={activeTab}
           onTabChange={setTab}
           intercambiosBadge={intercambiosBadge}
-          logrosBadge={unlockedCount}
+          logrosBadge={logrosBadge}
         />
       </div>
 
@@ -212,7 +233,7 @@ function AppShell() {
         onClose={() => setIsProfileOpen(false)}
         userName={userName}
         setUserName={setUserName}
-        authEmail={authEmail}
+        authEmail={sessionEmail || authEmail}
         stats={stats}
         unlockedAchievementsCount={unlockedCount}
         connectionsCount={connections.length}

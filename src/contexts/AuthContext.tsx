@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
 import { supabase } from '@/services/supabase'
 import { signIn, isUsernameAvailable } from '@/services/auth.service'
+import { formatUsername } from '@/lib/username'
 
 type AuthStep = 'email' | 'loading' | 'register'
 
@@ -45,7 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        setUserName(session.user.user_metadata?.username ?? session.user.email?.split('@')[0] ?? '')
+        setUserName(formatUsername(session.user.user_metadata?.username ?? session.user.email?.split('@')[0] ?? ''))
         setSessionUserId(session.user.id)
         setSessionEmail(session.user.email ?? '')
         setIsAuthenticated(true)
@@ -55,7 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
-        setUserName(session.user.user_metadata?.username ?? session.user.email?.split('@')[0] ?? '')
+        setUserName(formatUsername(session.user.user_metadata?.username ?? session.user.email?.split('@')[0] ?? ''))
         setSessionUserId(session.user.id)
         setSessionEmail(session.user.email ?? '')
         setIsAuthenticated(true)
@@ -89,7 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const trimmedUsername = userName.trim().toLowerCase()
+    const trimmedUsername = formatUsername(userName)
     if (!trimmedUsername || password.length < 6 || !authEmail.trim()) return
 
     const usernameRegex = /^[a-z0-9_]{3,20}$/
