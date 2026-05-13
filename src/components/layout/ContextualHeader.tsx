@@ -2,11 +2,11 @@ import { ListChecks, CheckCircle2, Users, RefreshCcw, Award, User } from 'lucide
 import type { Tab } from '@/lib/constants'
 
 const TAB_META: Record<Tab, { icon: React.ReactNode; label: string }> = {
-  resumen: { icon: <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={2.5} />, label: 'Resumen' },
-  detalle: { icon: <ListChecks className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={2.5} />, label: 'Detalle por Figurita' },
-  comparar: { icon: <Users className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={2.5} />, label: 'Clasificación' },
-  intercambios: { icon: <RefreshCcw className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={2.5} />, label: 'Intercambios' },
-  logros: { icon: <Award className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={2.5} />, label: 'Tus Logros' },
+  resumen: { icon: <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={2.5} />, label: 'Resumen de progreso' },
+  detalle: { icon: <ListChecks className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={2.5} />, label: 'Detalle por figurita' },
+  comparar: { icon: <Users className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={2.5} />, label: 'Ranking' },
+  intercambios: { icon: <RefreshCcw className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={2.5} />, label: 'Canjes' },
+  logros: { icon: <Award className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={2.5} />, label: 'Logros' },
 }
 
 interface Props {
