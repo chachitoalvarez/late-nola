@@ -188,7 +188,7 @@ export function ScanStickersDrawer({ isOpen, onClose, onConfirm, onManualLoad }:
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-base font-black text-zinc-900 tracking-tight truncate">
-              {flow.step === 'review' ? 'Revisá la carga' : flow.step === 'success' ? 'Figuritas guardadas' : 'Escaneá tus figuritas'}
+              {flow.step === 'review' ? 'Revisá la carga' : flow.step === 'success' ? 'Figurita guardada' : 'Escaneá tu figurita'}
             </p>
           </div>
           <button onClick={onClose} className="w-9 h-9 bg-zinc-100 rounded-full flex items-center justify-center text-zinc-500 hover:text-zinc-900 hover:bg-zinc-200 transition-colors active:scale-90 flex-shrink-0">
@@ -200,16 +200,16 @@ export function ScanStickersDrawer({ isOpen, onClose, onConfirm, onManualLoad }:
           {flow.step === 'intro' && (
             <div className="p-5 space-y-5">
               <div>
-                <h2 className="text-2xl font-black text-zinc-900 tracking-tight">Escaneá tus figuritas</h2>
+                <h2 className="text-2xl font-black text-zinc-900 tracking-tight">Escaneá tu figurita</h2>
                 <p className="text-sm text-zinc-500 font-medium mt-2 leading-relaxed">
-                  Sacá una foto del dorso de una o varias figuritas. Podés cargar hasta 10 por vez.
+                  Sacá una foto del dorso de una figurita. Para este MVP leemos solo el código superior derecho.
                 </p>
               </div>
               <div className="bg-zinc-50 border border-zinc-200 rounded-3xl p-4 space-y-3">
                 {[
-                  'Sacá una foto donde se vea bien el dorso de cada figurita.',
-                  'Podés cargar hasta 10 por foto.',
-                  'Separalas un poco y evitá reflejos o sombras.',
+                  'Sacá una foto donde se vea clara la cápsula negra del código.',
+                  'Ubicá la figurita derecha y evitá reflejos o sombras.',
+                  'Si no se lee bien, usá Ajustar área para recortar el código.',
                 ].map(text => (
                   <div key={text} className="flex items-start gap-3 text-sm font-medium text-zinc-600">
                     <Check className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" strokeWidth={3} />
@@ -224,7 +224,7 @@ export function ScanStickersDrawer({ isOpen, onClose, onConfirm, onManualLoad }:
             <div className="h-full flex flex-col items-center justify-center text-center p-8">
               <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mb-4" />
               <p className="font-black text-zinc-900">Leyendo la foto...</p>
-              <p className="text-sm font-medium text-zinc-500 mt-1">Estamos detectando las figuritas.</p>
+              <p className="text-sm font-medium text-zinc-500 mt-1">Estamos leyendo el código.</p>
             </div>
           )}
 
@@ -285,8 +285,8 @@ export function ScanStickersDrawer({ isOpen, onClose, onConfirm, onManualLoad }:
           {flow.step === 'empty' && (
             <div className="h-full flex flex-col items-center justify-center text-center p-8">
               <AlertCircle className="w-10 h-10 text-zinc-300 mb-3" strokeWidth={2} />
-              <h2 className="text-xl font-black text-zinc-900">No pudimos leer la foto</h2>
-              <p className="text-sm font-medium text-zinc-500 mt-2 max-w-[320px]">Probá sacarla de nuevo con más luz, enfocando bien el dorso y dejando espacio entre figuritas.</p>
+              <h2 className="text-xl font-black text-zinc-900">No pudimos leerlo bien</h2>
+              <p className="text-sm font-medium text-zinc-500 mt-2 max-w-[320px]">Podés intentarlo de nuevo o ingresar el código manualmente.</p>
             </div>
           )}
 
@@ -295,8 +295,8 @@ export function ScanStickersDrawer({ isOpen, onClose, onConfirm, onManualLoad }:
               <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mb-4">
                 <Check className="w-8 h-8" strokeWidth={3} />
               </div>
-              <h2 className="text-xl font-black text-zinc-900">Figuritas guardadas</h2>
-              <p className="text-sm font-medium text-zinc-500 mt-2 max-w-[320px]">Actualizamos tu álbum y sumamos las repetidas que detectamos.</p>
+              <h2 className="text-xl font-black text-zinc-900">Figurita guardada</h2>
+              <p className="text-sm font-medium text-zinc-500 mt-2 max-w-[320px]">Actualizamos tu álbum y sumamos la repetida si ya la tenías.</p>
             </div>
           )}
 
@@ -309,7 +309,7 @@ export function ScanStickersDrawer({ isOpen, onClose, onConfirm, onManualLoad }:
                 <p className="text-sm text-zinc-500 font-medium mt-2 leading-relaxed">
                   {hasLowConfidenceResult
                     ? 'Leímos este código, pero puede no ser correcto. Confirmalo o corregilo antes de guardarlo.'
-                    : 'Detectamos estas figuritas en la foto. Confirmá cuáles querés guardar en tu álbum.'}
+                    : 'Detectamos este código en la foto. Confirmá cuál querés guardar en tu álbum.'}
                 </p>
               </div>
 
@@ -425,10 +425,10 @@ export function ScanStickersDrawer({ isOpen, onClose, onConfirm, onManualLoad }:
             <div className="flex gap-2">
               <button onClick={retry} className="flex-1 bg-white border-2 border-zinc-200 text-zinc-700 font-bold py-3 px-3 rounded-2xl hover:bg-zinc-50 transition-all flex items-center justify-center gap-2">
                 <RotateCcw className="w-5 h-5" strokeWidth={2.5} />
-                Escanear otra foto
+                Escanear otra vez
               </button>
               <button onClick={confirm} disabled={flow.detections.length === 0 || hasPendingReview} className="flex-1 bg-zinc-900 text-white font-bold py-3 px-3 rounded-2xl hover:bg-zinc-800 disabled:bg-zinc-200 disabled:text-zinc-400 transition-all">
-                Guardar figuritas
+                Guardar figurita
               </button>
             </div>
           )}
@@ -440,17 +440,17 @@ export function ScanStickersDrawer({ isOpen, onClose, onConfirm, onManualLoad }:
           {flow.step === 'empty' && (
             <div className="flex gap-2">
               <button onClick={retry} className="flex-1 bg-zinc-900 text-white font-bold py-3 px-3 rounded-2xl hover:bg-zinc-800 transition-all">
-                Intentar de nuevo
+                Escanear otra vez
               </button>
               <button onClick={onManualLoad} className="flex-1 bg-white border-2 border-zinc-200 text-zinc-700 font-bold py-3 px-3 rounded-2xl hover:bg-zinc-50 transition-all">
-                Cargar manualmente
+                Ingresar código
               </button>
             </div>
           )}
           {flow.step === 'success' && (
             <div className="flex gap-2">
               <button onClick={retry} className="flex-1 bg-white border-2 border-zinc-200 text-zinc-700 font-bold py-3 px-3 rounded-2xl hover:bg-zinc-50 transition-all">
-                Escanear otra foto
+                Escanear otra vez
               </button>
               <button onClick={onClose} className="flex-1 bg-zinc-900 text-white font-bold py-3 px-3 rounded-2xl hover:bg-zinc-800 transition-all">
                 Listo
