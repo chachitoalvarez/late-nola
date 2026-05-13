@@ -81,7 +81,7 @@ export function DetalleFiltersBar({
             onClick={() => toggle('repeated')}
             className={`${BTN_BASE} ${detailFilter === 'repeated' ? BTN_ACTIVE : BTN_INACTIVE}`}
           >
-            <Layers className="w-4 h-4" strokeWidth={2.5} />
+            <Layers className="w-5 h-5" strokeWidth={2.5} />
             Repetidas
           </button>
         </div>
