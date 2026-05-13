@@ -12,7 +12,7 @@ export function BottomNav({ activeTab, onTabChange, intercambiosBadge, logrosBad
   const navItems: Array<{ id: Tab; label: string; icon: (active: boolean) => React.ReactNode; badge?: number }> = [
     { id: 'resumen', label: 'Resumen', icon: (a) => <CheckCircle2 className="w-6 h-6" strokeWidth={a ? 3 : 2} /> },
     { id: 'detalle', label: 'Detalle', icon: (a) => <ListChecks className="w-6 h-6" strokeWidth={a ? 3 : 2} /> },
-    { id: 'comparar', label: 'Clasificación', icon: (a) => <Users className="w-6 h-6" strokeWidth={a ? 3 : 2} /> },
+    { id: 'comparar', label: 'Ranking', icon: (a) => <Users className="w-6 h-6" strokeWidth={a ? 3 : 2} /> },
     { id: 'intercambios', label: 'Canjes', icon: (a) => <RefreshCcw className="w-6 h-6" strokeWidth={a ? 3 : 2} />, badge: intercambiosBadge },
     { id: 'logros', label: 'Logros', icon: (a) => <Award className="w-6 h-6" strokeWidth={a ? 3 : 2} />, badge: logrosBadge },
   ]
@@ -27,7 +27,7 @@ export function BottomNav({ activeTab, onTabChange, intercambiosBadge, logrosBad
             onClick={() => onTabChange(item.id)}
             aria-label={item.label}
             title={item.label}
-            className={`flex items-center justify-center flex-1 h-full transition-colors active:scale-95 ${isActive ? 'text-amber-600' : 'text-zinc-400 hover:text-zinc-600'}`}
+            className={`flex flex-col items-center justify-center flex-1 h-full gap-1.5 transition-colors active:scale-95 ${isActive ? 'text-amber-600' : 'text-zinc-400 hover:text-zinc-600'}`}
           >
             <div className="relative">
               {item.icon(isActive)}
@@ -37,6 +37,7 @@ export function BottomNav({ activeTab, onTabChange, intercambiosBadge, logrosBad
                 </span>
               )}
             </div>
+            <span className="text-[10px] font-bold tracking-wide leading-none">{item.label}</span>
           </button>
         )
       })}
