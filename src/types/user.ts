@@ -17,4 +17,9 @@ export interface Friend {
 export interface LeaderboardEntry extends Omit<Friend, 'id'> {
   id: number | string
   isMe?: boolean
+  tradeSummary?: {
+    theyOfferCount: number
+    iOfferCount: number
+    status: 'ok' | 'not_accessible' | 'error'
+  }
 }

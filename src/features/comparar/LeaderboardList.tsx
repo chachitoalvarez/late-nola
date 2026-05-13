@@ -1,4 +1,4 @@
-import { Medal, User, UsersRound } from 'lucide-react'
+import { ArrowDownLeft, ArrowUpRight, Medal, User, UsersRound } from 'lucide-react'
 import { getProgressColor } from '@/lib/stats'
 import type { LeaderboardEntry } from '@/types/user'
 
@@ -8,6 +8,18 @@ interface Props {
   emptyMessage?: string
   onClickUser: (user: LeaderboardEntry) => void
   onClickMe: () => void
+}
+
+function getTradeSummaryLabel(user: LeaderboardEntry): string {
+  const summary = user.tradeSummary
+  if (user.isMe) return 'Tu perfil'
+  if (!summary) return 'Calculando cruce...'
+  if (summary.status === 'not_accessible') return 'Perfil privado'
+  if (summary.status === 'error') return 'Cruce no disponible'
+  if (summary.theyOfferCount > 0 && summary.iOfferCount > 0) return 'Buen cruce'
+  if (summary.theyOfferCount > 0) return 'Te aporta figuritas'
+  if (summary.iOfferCount > 0) return 'Podés ayudarle'
+  return 'Sin cruce por ahora'
 }
 
 export function LeaderboardList({ leaderboard, isLoading, emptyMessage, onClickUser, onClickMe }: Props) {
@@ -83,6 +95,25 @@ export function LeaderboardList({ leaderboard, isLoading, emptyMessage, onClickU
                     <span className="text-zinc-300">•</span>
                     <span className="font-medium text-zinc-500"><strong className="text-amber-600 font-black">{user.repeated}</strong> repetidas</span>
                   </div>
+                  {!isMe && (
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <span className={`text-[11px] font-black px-2.5 py-1 rounded-full border ${
+                        user.tradeSummary?.status === 'ok' && (user.tradeSummary.theyOfferCount > 0 || user.tradeSummary.iOfferCount > 0)
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                          : 'bg-zinc-50 text-zinc-500 border-zinc-200'
+                      }`}>
+                        {getTradeSummaryLabel(user)}
+                      </span>
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-100 px-2 py-1 rounded-full">
+                        <ArrowDownLeft className="w-3 h-3" strokeWidth={3} />
+                        Recibís {user.tradeSummary?.status === 'ok' ? user.tradeSummary.theyOfferCount : '-'}
+                      </span>
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-700 bg-blue-50 border border-blue-100 px-2 py-1 rounded-full">
+                        <ArrowUpRight className="w-3 h-3" strokeWidth={3} />
+                        Entregás {user.tradeSummary?.status === 'ok' ? user.tradeSummary.iOfferCount : '-'}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
 

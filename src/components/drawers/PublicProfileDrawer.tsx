@@ -82,7 +82,6 @@ export function PublicProfileDrawer({ user, onClose, onStartChat }: Props) {
           </div>
           <div className="flex flex-col gap-0.5 min-w-0 flex-1">
             <p className="text-base font-black text-zinc-900 tracking-tight truncate">@{user.name || 'usuario'}</p>
-            <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Coleccionista</p>
           </div>
           <button onClick={onClose} className="w-9 h-9 bg-zinc-100 rounded-full flex items-center justify-center text-zinc-500 hover:text-zinc-900 hover:bg-zinc-200 transition-colors active:scale-90 flex-shrink-0">
             <X className="w-4 h-4" strokeWidth={2.5} />
