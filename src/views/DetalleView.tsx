@@ -30,8 +30,6 @@ export function DetalleView({
 
   return (
     <div className="space-y-6 animate-in slide-in-from-right-4 duration-300 relative">
-      <ScanStickersCard onOpen={() => setIsScanOpen(true)} />
-
       <DetalleFiltersBar
         albumData={albumData}
         selectedSection={selectedSection}
@@ -43,6 +41,8 @@ export function DetalleView({
         setDetailFilter={setDetailFilter}
         stats={stats}
       />
+
+      <ScanStickersCard onOpen={() => setIsScanOpen(true)} />
 
       <div className="space-y-8 sm:space-y-10">
         {selectedSection === 'all'

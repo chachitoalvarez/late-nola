@@ -99,9 +99,9 @@ export function ScanStickersDrawer({ isOpen, onClose, onConfirm, onManualLoad }:
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-zinc-900/60 backdrop-blur-sm animate-in fade-in">
+    <div className="fixed inset-0 z-50 flex items-end md:items-stretch md:justify-end bg-zinc-900/60 backdrop-blur-sm animate-in fade-in">
       <div className="absolute inset-0" onClick={onClose} />
-      <div className="w-full md:w-[460px] bg-zinc-50 h-[100dvh] shadow-2xl flex flex-col relative z-10 animate-in slide-in-from-right-8 duration-300 rounded-l-[2rem] md:rounded-l-none overflow-hidden">
+      <div className="w-full md:w-[460px] bg-zinc-50 max-h-[92dvh] md:max-h-none md:h-[100dvh] shadow-2xl flex flex-col relative z-10 animate-in slide-in-from-bottom-8 md:slide-in-from-right-8 duration-300 rounded-t-[2rem] md:rounded-t-none md:rounded-l-[2rem] overflow-hidden">
         <input
           ref={inputRef}
           type="file"
@@ -257,11 +257,11 @@ export function ScanStickersDrawer({ isOpen, onClose, onConfirm, onManualLoad }:
           )}
         </div>
 
-        <div className="flex-shrink-0 p-4 bg-white border-t border-zinc-200/60 shadow-[0_-4px_15px_rgba(0,0,0,0.02)] pb-[calc(1rem+env(safe-area-inset-bottom))]">
+        <div className="flex-shrink-0 p-4 bg-white border-t border-zinc-200/60 shadow-[0_-4px_15px_rgba(0,0,0,0.02)] pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
           {flow.step === 'intro' && (
             <button onClick={pickPhoto} className="w-full bg-zinc-900 text-white font-bold py-3 px-4 rounded-2xl hover:bg-zinc-800 transition-all flex items-center justify-center gap-2 active:scale-[0.98]">
               <ImagePlus className="w-5 h-5" strokeWidth={2.5} />
-              Sacar o subir foto
+              Subir foto
             </button>
           )}
           {flow.step === 'review' && (
