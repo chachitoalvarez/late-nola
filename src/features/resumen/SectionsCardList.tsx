@@ -1,4 +1,5 @@
-import { Globe, ChevronRight } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
+import { SectionAvatar } from '@/components/ui/SectionAvatar'
 import { getSectionUniqueCount, getSectionRepeatedCount, getSectionPercentage } from '@/lib/stats'
 import type { AlbumSection } from '@/types/album'
 
@@ -23,9 +24,7 @@ export function SectionsCardList({ data, onGoToDetail }: Props) {
           >
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-zinc-100 border border-zinc-200 flex items-center justify-center flex-shrink-0">
-                  <Globe className="w-5 h-5 text-zinc-300" />
-                </div>
+                <SectionAvatar section={item} size="md" />
                 <span className="font-black text-zinc-900 text-lg tracking-tight">{item.section}</span>
               </div>
               <div className="flex items-center gap-2">

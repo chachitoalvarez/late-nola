@@ -1,6 +1,7 @@
-import { Globe, ChevronRight } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 import { Search } from 'lucide-react'
 import { ProgressBar } from '@/components/ui/ProgressBar'
+import { SectionAvatar } from '@/components/ui/SectionAvatar'
 import { getSectionUniqueCount, getSectionRepeatedCount, getSectionPercentage } from '@/lib/stats'
 import type { AlbumSection } from '@/types/album'
 
@@ -46,9 +47,7 @@ export function SectionsTable({ data, searchTerm, onGoToDetail }: Props) {
               <tr key={index} className="hover:bg-zinc-50/80 transition-colors group cursor-pointer" onClick={() => onGoToDetail(item.section)}>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-zinc-900">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-zinc-100 border border-zinc-200 flex items-center justify-center flex-shrink-0">
-                      <Globe className="w-4 h-4 text-zinc-300" />
-                    </div>
+                    <SectionAvatar section={item} />
                     {item.section}
                   </div>
                 </td>
