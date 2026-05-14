@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { DetalleFiltersBar } from '@/features/detalle/DetalleFiltersBar'
-import { ScanStickersCard } from '@/features/detalle/ScanStickersCard'
-import { ScanStickersDrawer } from '@/features/detalle/ScanStickersDrawer'
+import { CodeEntryCard } from '@/features/detalle/CodeEntryCard'
+import { CodeEntryDrawer } from '@/features/detalle/CodeEntryDrawer'
 import { StickerGrid } from '@/features/detalle/StickerGrid'
 import type { AlbumSection, AlbumStats, DetailFilter, Sticker } from '@/types/album'
 
@@ -42,7 +42,12 @@ export function DetalleView({
         stats={stats}
       />
 
-      <ScanStickersCard onOpen={() => setIsScanOpen(true)} />
+      <div className="rounded-3xl border border-zinc-200 bg-zinc-50/80 p-4 space-y-3">
+        <p className="text-sm font-semibold text-zinc-600">
+          En la versión web, cargá tus figuritas ingresando el código del dorso.
+        </p>
+        <CodeEntryCard onOpen={() => setIsScanOpen(true)} />
+      </div>
 
       <div className="space-y-8 sm:space-y-10">
         {selectedSection === 'all'
@@ -67,8 +72,9 @@ export function DetalleView({
       </div>
 
       {isScanOpen && (
-        <ScanStickersDrawer
+        <CodeEntryDrawer
           isOpen
+          albumData={albumData}
           onClose={() => setIsScanOpen(false)}
           onConfirm={onAddScannedStickers}
         />

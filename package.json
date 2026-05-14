@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test:ocr": "node scripts/test-sticker-ocr.mjs"
+    "test:ocr": "node scripts/test-sticker-ocr.mjs",
+    "test:codes": "node scripts/test-sticker-code.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.105.3",

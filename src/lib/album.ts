@@ -1,5 +1,7 @@
-import { stickersByCode, stickersBySubseccion, albumStickers } from '@/data/albumData'
+import { stickersBySubseccion, albumStickers } from '@/data/albumData'
 import type { Sticker } from '@/types/album'
+export { normalizeStickerCode, parseStickerCode, validateStickerCode } from '@/lib/stickerCode'
+import { validateStickerCode } from '@/lib/stickerCode'
 
 interface PlayerInfo {
   number: number
@@ -7,38 +9,13 @@ interface PlayerInfo {
   role?: 'captain' | 'coach' | 'special'
 }
 
-/**
- * Normaliza un código de figurita ingresado por el usuario al formato canónico.
- * Acepta: ARG1, ARG01, ARG001, arg17, etc.
- * Devuelve: ARG001, ARG017, etc. (uppercase + 3 dígitos)
- * Devuelve null si el formato es inválido o el código no existe.
- */
-export function normalizeStickerCode(input: string): string | null {
-  if (!input) return null
-  const cleaned = input.trim().toUpperCase().replace(/[\s\-_]/g, '')
-  const match = cleaned.match(/^([A-Z]{2,4})(\d+)$/)
-  if (!match) return null
-
-  const [, prefix, num] = match
-  const paddedNum = num.padStart(3, '0')
-  const canonical = `${prefix}${paddedNum}`
-
-  // Validar que el código existe en el catálogo
-  return stickersByCode.has(canonical) ? canonical : null
-}
-
-/**
- * Busca una figurita por código canónico o alias.
- * Acepta ARG1, ARG017, etc.
- */
 export function findStickerByCode(input: string): Sticker | null {
-  const canonical = normalizeStickerCode(input)
-  if (!canonical) return null
-  return stickersByCode.get(canonical) ?? null
+  const validation = validateStickerCode(input)
+  return validation.status === 'valid' ? validation.sticker ?? null : null
 }
 
 export function getStickerByCanonicalCode(code: string): Sticker | null {
-  return stickersByCode.get(code) ?? null
+  return albumStickers.find(sticker => sticker.codigoFigura === code) ?? null
 }
 
 /**
