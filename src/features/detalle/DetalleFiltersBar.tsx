@@ -39,7 +39,7 @@ export function DetalleFiltersBar({
         <div className="w-full lg:w-auto flex items-center gap-3 shrink-0">
           <label className="font-semibold text-zinc-600 hidden sm:block text-[13px] whitespace-nowrap">Sección</label>
           <select
-            className="w-full lg:w-44 xl:w-52 px-4 py-3 lg:py-0 bg-white border border-zinc-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-amber-500/20 focus:border-amber-500 font-semibold text-zinc-900 transition-all cursor-pointer shadow-sm appearance-none shrink-0 h-11 lg:h-11"
+            className="w-full lg:w-[300px] xl:w-[320px] max-w-full px-4 py-3 lg:py-0 bg-white border border-zinc-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-amber-500/20 focus:border-amber-500 font-semibold text-zinc-900 transition-all cursor-pointer shadow-sm appearance-none shrink-0 h-11 lg:h-11"
             value={selectedSection}
             onChange={e => setSelectedSection(e.target.value)}
             style={{
@@ -60,8 +60,8 @@ export function DetalleFiltersBar({
         <SearchInput
           value={stickerSearchTerm}
           onChange={handleStickerSearch}
-          placeholder="Buscar ARG17 o ARG017..."
-          className="w-full lg:w-56 xl:w-64 shrink-0"
+          placeholder="Buscar ARG10..."
+          className="w-full lg:w-[260px] xl:w-[280px] shrink-0"
         />
 
         <div className="grid grid-cols-3 gap-2 w-full lg:w-auto sm:flex sm:flex-row sm:w-auto shrink-0">
