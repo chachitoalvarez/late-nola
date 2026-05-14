@@ -206,10 +206,7 @@ export function CodeEntryDrawer({ isOpen, albumData, onClose, onConfirm }: Props
           {flow === 'review' && selectedSticker && (
             <div className="p-5 space-y-4">
               <div>
-                <h2 className="text-2xl font-black text-zinc-900 tracking-tight">Encontramos esta figurita</h2>
-                <p className="text-sm text-zinc-500 font-medium mt-2 leading-relaxed">
-                  Revisá que sea la correcta antes de guardarla.
-                </p>
+                <h2 className="text-2xl font-black text-zinc-900 tracking-tight">Revisá antes de guardar</h2>
               </div>
 
               <div className="bg-zinc-50 border border-zinc-200 rounded-2xl p-4 space-y-3">
@@ -219,7 +216,7 @@ export function CodeEntryDrawer({ isOpen, albumData, onClose, onConfirm }: Props
                       {selectedSticker.nombreFigura || selectedSticker.codigoAlias}
                     </p>
                     <p className="text-xs font-bold text-zinc-400 truncate">
-                      {selectedSticker.paisEquipo || selectedSticker.subseccion} · {selectedSticker.codigoAlias}
+                      {selectedSticker.paisEquipo || selectedSticker.subseccion}
                     </p>
                   </div>
                   <span className={`shrink-0 inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-black uppercase tracking-wider ${
@@ -232,12 +229,6 @@ export function CodeEntryDrawer({ isOpen, albumData, onClose, onConfirm }: Props
                 <div className="text-sm font-bold text-zinc-900">
                   Código cargado: <span className="text-amber-600">{selectedSticker.codigoAlias}</span>
                 </div>
-
-                <p className="text-sm font-medium text-zinc-600 leading-relaxed">
-                  {currentCount <= 0
-                    ? 'Se va a sumar a tu álbum.'
-                    : 'Ya la tenías. Se va a sumar a tus repetidas.'}
-                </p>
               </div>
             </div>
           )}
