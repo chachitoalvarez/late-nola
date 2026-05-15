@@ -5,7 +5,7 @@ export async function getPublicProfileSetting(): Promise<{ isPublic: boolean; er
   if (!user) return { isPublic: true, error: 'No hay sesión activa' }
 
   const { data, error } = await supabase
-    .from('profiles')
+    .from('users')
     .select('is_public_profile')
     .eq('id', user.id)
     .single()
@@ -19,7 +19,7 @@ export async function updatePublicProfileSetting(isPublic: boolean): Promise<{ e
   if (!user) return { error: 'No hay sesión activa' }
 
   const { error } = await supabase
-    .from('profiles')
+    .from('users')
     .upsert({ id: user.id, is_public_profile: isPublic }, { onConflict: 'id' })
 
   return { error: error?.message ?? null }

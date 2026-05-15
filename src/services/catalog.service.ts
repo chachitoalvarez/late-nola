@@ -147,7 +147,7 @@ export async function loadCatalog(): Promise<CatalogData> {
 
   // Fetch from Supabase
   const { data, error } = await supabase
-    .from('stickers')
+    .from('figuritas')
     .select('*')
     .order('numero_orden', { ascending: true })
     .limit(1000)
