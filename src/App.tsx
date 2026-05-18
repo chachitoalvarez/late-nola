@@ -121,7 +121,11 @@ function AppShell() {
     handleRemoveMember, handleDeleteGroup, refresh: refreshGroups,
   } = useGroups()
 
-  const { leaderboard, isLoadingLeaderboard } = useLeaderboard(compareFilter, groupsRevision)
+  const { leaderboard, isLoadingLeaderboard, updateUserAvatar } = useLeaderboard(compareFilter, groupsRevision)
+  const handleAvatarChange = (nextAvatarKey: string | null) => {
+    setAvatarKey(nextAvatarKey)
+    if (sessionUserId) updateUserAvatar(sessionUserId, nextAvatarKey)
+  }
 
   if (!authInitialized) return <div className="min-h-screen bg-zinc-50 flex items-center justify-center"><div className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" /></div>
   if (!isAuthenticated) return <LoginView />
@@ -268,7 +272,7 @@ function AppShell() {
         userName={userName}
         setUserName={setUserName}
         avatarKey={avatarKey}
-        onAvatarChange={setAvatarKey}
+        onAvatarChange={handleAvatarChange}
         authEmail={sessionEmail || authEmail}
         stats={stats}
         unlockedAchievementsCount={unlockedCount}

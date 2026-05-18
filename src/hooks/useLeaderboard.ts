@@ -74,5 +74,11 @@ export function useLeaderboard(compareFilter: string, refreshKey = 0) {
     }
   }, [compareFilter, refreshKey])
 
-  return { leaderboard, isLoadingLeaderboard }
+  const updateUserAvatar = (userId: string | number, avatarKey: string | null) => {
+    setLeaderboard(current => current.map(user => (
+      String(user.id) === String(userId) ? { ...user, avatarKey } : user
+    )))
+  }
+
+  return { leaderboard, isLoadingLeaderboard, updateUserAvatar }
 }
