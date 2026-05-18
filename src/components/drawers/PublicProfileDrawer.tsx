@@ -1,11 +1,12 @@
 import { useEffect, useState, useCallback } from 'react'
-import { X, User, RefreshCcw, Trophy, Lock, AlertCircle, MessageCircle, ArrowUpRight, ArrowDownLeft } from 'lucide-react'
+import { X, RefreshCcw, Trophy, Lock, AlertCircle, MessageCircle, ArrowUpRight, ArrowDownLeft } from 'lucide-react'
 import { getTradeMatch } from '@/services/trades.service'
 import { TradeStickerGroup } from '@/features/intercambios/TradeStickerGroup'
 import { TradeBalanceBar } from '@/features/intercambios/TradeBalanceBar'
 import { describeStickerCode, getStickerByCanonicalCode } from '@/lib/album'
 import type { LeaderboardEntry } from '@/types/user'
 import type { TradeMatch } from '@/types/trade'
+import { UserAvatar } from '@/components/ui/UserAvatar'
 
 interface Props {
   user: LeaderboardEntry
@@ -77,8 +78,8 @@ export function PublicProfileDrawer({ user, onClose, onStartChat }: Props) {
       <div className="absolute inset-0" onClick={onClose} />
       <div className="w-full md:w-[400px] bg-zinc-50 h-[100dvh] shadow-2xl flex flex-col relative z-10 animate-in slide-in-from-right-8 duration-300 rounded-l-[2rem] md:rounded-l-none overflow-hidden">
         <div className="flex-shrink-0 px-5 py-4 bg-white border-b border-zinc-200/60 flex items-center gap-3 pt-[calc(1rem+env(safe-area-inset-top))]">
-          <div className="w-10 h-10 rounded-full bg-zinc-100 border-2 border-white shadow-sm flex items-center justify-center flex-shrink-0">
-            <User className="w-5 h-5 text-zinc-400" strokeWidth={2.5} />
+          <div className="rounded-full border-2 border-white shadow-sm overflow-hidden flex-shrink-0">
+            <UserAvatar avatarKey={user.avatarKey} className="w-10 h-10" />
           </div>
           <div className="flex flex-col gap-0.5 min-w-0 flex-1">
             <p className="text-base font-black text-zinc-900 tracking-tight truncate">@{user.name || 'usuario'}</p>

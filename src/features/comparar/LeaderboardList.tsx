@@ -1,5 +1,6 @@
-import { ArrowDownLeft, ArrowUpRight, Medal, User, UsersRound } from 'lucide-react'
+import { ArrowDownLeft, ArrowUpRight, Medal, UsersRound } from 'lucide-react'
 import { getProgressColor } from '@/lib/stats'
+import { UserAvatar } from '@/components/ui/UserAvatar'
 import type { LeaderboardEntry } from '@/types/user'
 
 interface Props {
@@ -55,10 +56,13 @@ function MobileRankingItem({ user, index, onClickUser, onClickMe }: {
           <RankingMark index={index} compact />
         </div>
 
-        <div className={`flex h-9 w-9 items-center justify-center rounded-full border-2 shadow-sm ${
-          isMe ? 'border-white bg-gradient-to-br from-amber-100 to-amber-50' : 'border-white bg-zinc-100'
-        }`}>
-          <User className={`h-4.5 w-4.5 ${isMe ? 'text-amber-600' : 'text-zinc-400'}`} />
+        <div className="rounded-full border-2 border-white shadow-sm overflow-hidden">
+          <UserAvatar
+            avatarKey={user.avatarKey}
+            className="h-9 w-9"
+            iconClassName="h-4.5 w-4.5"
+            fallbackClassName={isMe ? 'bg-gradient-to-br from-amber-100 to-amber-50 text-amber-600' : 'bg-zinc-100 text-zinc-400'}
+          />
         </div>
 
         <div className="min-w-0">
@@ -166,10 +170,13 @@ export function LeaderboardList({ leaderboard, isLoading, emptyMessage, onClickU
                 </div>
 
                 <div className="flex min-w-0 flex-1 items-center gap-4">
-                  <div className={`flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full border-2 shadow-sm lg:h-12 lg:w-12 ${
-                    isMe ? 'border-white bg-gradient-to-br from-amber-100 to-amber-50' : 'border-white bg-zinc-100'
-                  }`}>
-                    <User className={`h-6 w-6 lg:h-5 lg:w-5 ${isMe ? 'text-amber-600' : 'text-zinc-400'}`} />
+                  <div className="rounded-full border-2 border-white shadow-sm overflow-hidden flex-shrink-0">
+                    <UserAvatar
+                      avatarKey={user.avatarKey}
+                      className="h-14 w-14 lg:h-12 lg:w-12"
+                      iconClassName="h-6 w-6 lg:h-5 lg:w-5"
+                      fallbackClassName={isMe ? 'bg-gradient-to-br from-amber-100 to-amber-50 text-amber-600' : 'bg-zinc-100 text-zinc-400'}
+                    />
                   </div>
                   <div className="min-w-0">
                     <p className={`flex items-center gap-2 truncate font-black tracking-tight ${isMe ? 'text-xl text-amber-900 lg:text-lg' : 'text-lg text-zinc-800 lg:text-[17px]'}`}>

@@ -2,6 +2,7 @@ export interface User {
   id: string | number
   name: string
   email: string
+  avatarKey?: string | null
   isMe?: boolean
 }
 
@@ -12,6 +13,7 @@ export interface Friend {
   completed: number
   needed: number
   repeated: number
+  avatarKey?: string | null
 }
 
 export interface LeaderboardEntry extends Omit<Friend, 'id'> {

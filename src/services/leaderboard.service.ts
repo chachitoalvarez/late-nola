@@ -9,6 +9,7 @@ interface LeaderboardRow {
   repeated_count: number
   total_needed: number
   percentage: number
+  avatar_key: string | null
 }
 
 async function getCurrentUserId(): Promise<string | null> {
@@ -24,6 +25,7 @@ function rowToEntry(row: LeaderboardRow, currentUserId: string | null): Leaderbo
     completed: row.unique_count,
     needed: row.total_needed,
     repeated: row.repeated_count,
+    avatarKey: row.avatar_key,
     isMe: row.user_id === currentUserId,
   }
 }
