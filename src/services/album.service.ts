@@ -5,12 +5,20 @@ import { LEGACY_LOCAL_STORAGE_KEY, LOCAL_STORAGE_KEY } from '@/lib/constants'
 
 type LegacyCollectedMap = Record<string, Record<string, number>>
 
-const TOTAL_NEEDED = baseAlbumData.reduce((acc, s) => acc + s.needed, 0)
+const BASE_TOTAL_NEEDED = baseAlbumData
+  .filter(s => s.seccion !== 'Extras Coca-Cola' && s.codigoBase !== 'CC')
+  .reduce((acc, s) => acc + s.needed, 0)
+
+function isBaseAlbumCode(code: string): boolean {
+  const sticker = stickersByCode.get(code)
+  return !!sticker && sticker.seccion !== 'Extras Coca-Cola'
+}
 
 function computeTotals(collected: UserStickerCount): { uniqueCount: number; repeatedCount: number } {
   let uniqueCount = 0
   let repeatedCount = 0
-  for (const count of Object.values(collected)) {
+  for (const [code, count] of Object.entries(collected)) {
+    if (!isBaseAlbumCode(code)) continue
     if (count > 0) uniqueCount++
     if (count > 1) repeatedCount += count - 1
   }
@@ -93,7 +101,7 @@ export async function getAlbumState(): Promise<{ data: AlbumSection[] | null; er
   const { data: upsertedRows } = await supabase
     .from('user_album_state')
     .upsert(
-      { user_id: user.id, collected: migratedCollected, unique_count: uniqueCount, repeated_count: repeatedCount, total_needed: TOTAL_NEEDED },
+      { user_id: user.id, collected: migratedCollected, unique_count: uniqueCount, repeated_count: repeatedCount, total_needed: BASE_TOTAL_NEEDED },
       { onConflict: 'user_id', ignoreDuplicates: true }
     )
     .select('collected')
@@ -122,7 +130,7 @@ export async function saveAlbumState(albumData: AlbumSection[]): Promise<{ error
   const { error } = await supabase
     .from('user_album_state')
     .upsert(
-      { user_id: user.id, collected, unique_count: uniqueCount, repeated_count: repeatedCount, total_needed: TOTAL_NEEDED },
+      { user_id: user.id, collected, unique_count: uniqueCount, repeated_count: repeatedCount, total_needed: BASE_TOTAL_NEEDED },
       { onConflict: 'user_id' }
     )
 

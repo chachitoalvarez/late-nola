@@ -1,4 +1,4 @@
-export const TABS = ['resumen', 'detalle', 'comparar', 'intercambios', 'logros'] as const
+export const TABS = ['resumen', 'detalle', 'comparar', 'intercambios', 'prode', 'logros'] as const
 export type Tab = (typeof TABS)[number]
 
 export const APP_NAME = 'Late Nola'
@@ -14,6 +14,7 @@ export const TAB_LABELS: Record<Tab, string> = {
   detalle: 'Detalle',
   comparar: 'Ranking',
   intercambios: 'Canjes',
+  prode: 'Prode',
   logros: 'Logros',
 }
 
@@ -22,6 +23,7 @@ export const TAB_PATHS: Record<Tab, string> = {
   detalle: '/detalle',
   comparar: '/ranking',
   intercambios: '/canjes',
+  prode: '/prode',
   logros: '/logros',
 }
 
@@ -31,6 +33,7 @@ export const PATH_TABS: Record<string, Tab> = {
   '/detalle': 'detalle',
   '/ranking': 'comparar',
   '/canjes': 'intercambios',
+  '/prode': 'prode',
   '/logros': 'logros',
 }
 

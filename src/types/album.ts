@@ -54,4 +54,14 @@ export interface AlbumStats {
   percentage: number
   missing: number
   totalRepeated: number
+  baseNeeded: number
+  baseCompleted: number
+  basePercentage: number
+  baseMissing: number
+  baseRepeated: number
+  extrasNeeded: number
+  extrasCompleted: number
+  extrasPercentage: number
+  extrasMissing: number
+  extrasRepeated: number
 }

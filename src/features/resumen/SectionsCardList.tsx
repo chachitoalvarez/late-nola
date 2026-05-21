@@ -1,6 +1,6 @@
 import { ChevronRight } from 'lucide-react'
 import { SectionAvatar } from '@/components/ui/SectionAvatar'
-import { getSectionUniqueCount, getSectionRepeatedCount, getSectionPercentage } from '@/lib/stats'
+import { getSectionUniqueCount, getSectionRepeatedCount, getSectionPercentage, isExtrasSection } from '@/lib/stats'
 import type { AlbumSection } from '@/types/album'
 
 interface Props {
@@ -15,17 +15,23 @@ export function SectionsCardList({ data, onGoToDetail }: Props) {
         const uniqueCount = getSectionUniqueCount(item)
         const repeatedCount = getSectionRepeatedCount(item)
         const percentage = getSectionPercentage(item)
+        const isExtra = isExtrasSection(item)
 
         return (
           <div
             key={index}
-            className="p-5 lg:p-4 bg-white hover:bg-zinc-50 active:bg-zinc-100 transition-colors cursor-pointer group"
+            className={`p-5 lg:p-4 ${isExtra ? 'bg-red-50/30 hover:bg-red-50/60 active:bg-red-50' : 'bg-white hover:bg-zinc-50 active:bg-zinc-100'} transition-colors cursor-pointer group`}
             onClick={() => onGoToDetail(item.section)}
           >
             <div className="flex items-center justify-between mb-4 lg:mb-3">
               <div className="flex items-center gap-3">
                 <SectionAvatar section={item} size="md" />
                 <span className="font-black text-zinc-900 text-lg lg:text-base tracking-tight">{item.section}</span>
+                {isExtra && (
+                  <span className="px-2 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-200 text-[10px] font-black uppercase tracking-wide">
+                    Extra
+                  </span>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 <span className={`px-2.5 py-1 rounded-full text-xs font-bold border shadow-sm ${

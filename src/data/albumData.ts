@@ -8,7 +8,7 @@
  * All other modules import from here — they never touch the JSON or Supabase directly.
  */
 
-import rawData from './panini_mundial_2026_980_limpio.json'
+import rawData from './panini_mundial_2026_992_con_coca_cola.json'
 import type { Sticker, AlbumSection, StickerType, TipoColeccion, Acabado } from '@/types/album'
 import { loadCatalog, type CatalogData } from '@/services/catalog.service'
 
@@ -36,7 +36,7 @@ function buildFromJSON(): {
   codesBySubseccion: Map<string, Set<string>>
 } {
   const stickers: Sticker[] = (rawData.figuritas as RawSticker[]).map(f => ({
-    id: `wc2026:base:${f.codigo_figura}`,
+    id: `wc2026:${f.seccion === 'Extras Coca-Cola' ? 'extras-coca-cola' : 'base'}:${f.codigo_figura}`,
     numeroOrden: f.numero_orden,
     seccion: f.seccion,
     subseccion: f.subseccion,
@@ -55,27 +55,29 @@ function buildFromJSON(): {
   const bySubseccion = new Map<string, Sticker[]>()
   const codesBySubseccion = new Map<string, Set<string>>()
   for (const s of stickers) {
-    const arr = bySubseccion.get(s.subseccion) ?? []
+    const displaySection = s.seccion === 'Extras Coca-Cola' ? 'Extras Coca-Cola' : s.subseccion
+    const arr = bySubseccion.get(displaySection) ?? []
     arr.push(s)
-    bySubseccion.set(s.subseccion, arr)
+    bySubseccion.set(displaySection, arr)
 
-    const codes = codesBySubseccion.get(s.subseccion) ?? new Set<string>()
+    const codes = codesBySubseccion.get(displaySection) ?? new Set<string>()
     codes.add(s.codigoFigura)
-    codesBySubseccion.set(s.subseccion, codes)
+    codesBySubseccion.set(displaySection, codes)
   }
 
   const sectionMap = new Map<string, { stickers: Sticker[]; seccion: string }>()
   for (const s of stickers) {
-    const existing = sectionMap.get(s.subseccion)
+    const displaySection = s.seccion === 'Extras Coca-Cola' ? 'Extras Coca-Cola' : s.subseccion
+    const existing = sectionMap.get(displaySection)
     if (existing) {
       existing.stickers.push(s)
     } else {
-      sectionMap.set(s.subseccion, { stickers: [s], seccion: s.seccion })
+      sectionMap.set(displaySection, { stickers: [s], seccion: s.seccion })
     }
   }
 
   const sections: AlbumSection[] = []
-  for (const [subseccion, { stickers: stickerList, seccion }] of sectionMap) {
+  for (const [displaySection, { stickers: stickerList, seccion }] of sectionMap) {
     const sorted = stickerList.sort((a, b) => a.numeroOrden - b.numeroOrden)
     const first = sorted[0]
     const last = sorted[sorted.length - 1]
@@ -83,11 +85,11 @@ function buildFromJSON(): {
     const codigoBase = prefixMatch ? prefixMatch[1] : ''
 
     sections.push({
-      section: subseccion,
+      section: displaySection,
       needed: stickerList.length,
       collected: {},
       seccion,
-      subseccion,
+      subseccion: displaySection,
       codigoBase,
       ordenInicio: first.numeroOrden,
       ordenFin: last.numeroOrden,

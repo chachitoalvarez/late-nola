@@ -54,6 +54,7 @@ const AVATAR_BY_CODE: Record<string, string> = {
 }
 
 function getSectionAvatar(section: AlbumSection) {
+  if (section.seccion === 'Extras Coca-Cola' || section.codigoBase === 'CC') return 'CC'
   return AVATAR_BY_CODE[section.codigoBase] ?? section.codigoBase.slice(0, 2)
 }
 
@@ -65,14 +66,15 @@ interface Props {
 export function SectionAvatar({ section, size = 'sm' }: Props) {
   const sizeClass = size === 'md' ? 'w-10 h-10 text-2xl' : 'w-8 h-8 text-xl'
   const avatar = getSectionAvatar(section)
+  const isExtra = section.seccion === 'Extras Coca-Cola' || section.codigoBase === 'CC'
 
   return (
     <div
-      className={`${sizeClass} rounded-full bg-white border border-zinc-200 shadow-sm flex items-center justify-center flex-shrink-0 overflow-hidden`}
+      className={`${sizeClass} rounded-full ${isExtra ? 'bg-red-50 border-red-200 text-red-600' : 'bg-white border-zinc-200'} border shadow-sm flex items-center justify-center flex-shrink-0 overflow-hidden`}
       title={section.section}
       aria-label={section.section}
     >
-      <span className="leading-none">{avatar}</span>
+      <span className={`${isExtra ? 'text-xs font-black tracking-tight' : ''} leading-none`}>{avatar}</span>
     </div>
   )
 }

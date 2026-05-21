@@ -1,4 +1,4 @@
-import { ListChecks, CheckCircle2, Users, RefreshCcw, Award } from 'lucide-react'
+import { ListChecks, CheckCircle2, Users, RefreshCcw, Award, Trophy } from 'lucide-react'
 import type { Tab } from '@/lib/constants'
 import { UserAvatar } from '@/components/ui/UserAvatar'
 
@@ -7,6 +7,7 @@ const TAB_META: Record<Tab, { icon: React.ReactNode; label: string }> = {
   detalle: { icon: <ListChecks className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={2.5} />, label: 'Detalle por figurita' },
   comparar: { icon: <Users className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={2.5} />, label: 'Ranking' },
   intercambios: { icon: <RefreshCcw className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={2.5} />, label: 'Canjes' },
+  prode: { icon: <Trophy className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={2.5} />, label: 'Prode Late Nola' },
   logros: { icon: <Award className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={2.5} />, label: 'Logros' },
 }
 

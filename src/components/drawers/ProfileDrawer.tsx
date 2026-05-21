@@ -166,7 +166,7 @@ export function ProfileDrawer({
         <div className="flex-shrink-0 border-b border-zinc-200/60 bg-slate-50 p-4">
           <div className="grid grid-cols-4 gap-2">
             {[
-              { value: `${stats.percentage}%`, label: 'Avance', color: 'text-amber-600' },
+              { value: `${stats.basePercentage}%`, label: 'Avance', color: 'text-amber-600' },
               { value: unlockedAchievementsCount, label: 'Logros', color: 'text-emerald-600' },
               { value: connectionsCount, label: 'Canjes', color: 'text-blue-600' },
               { value: groupsCount, label: 'Grupos', color: 'text-purple-600' },

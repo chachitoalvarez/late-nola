@@ -1,4 +1,4 @@
-import { ListChecks, CheckCircle2, Users, RefreshCcw, Award } from 'lucide-react'
+import { ListChecks, CheckCircle2, Users, RefreshCcw, Award, Trophy } from 'lucide-react'
 import type { Tab } from '@/lib/constants'
 
 interface Props {
@@ -13,6 +13,7 @@ const tabs: Array<{ id: Tab; label: string; icon: React.ReactNode }> = [
   { id: 'detalle', label: 'Detalle', icon: <ListChecks className="w-4 h-4" /> },
   { id: 'comparar', label: 'Ranking', icon: <Users className="w-4 h-4" /> },
   { id: 'intercambios', label: 'Canjes', icon: <RefreshCcw className="w-4 h-4" /> },
+  { id: 'prode', label: 'Prode', icon: <Trophy className="w-4 h-4" /> },
   { id: 'logros', label: 'Logros', icon: <Award className="w-4 h-4" /> },
 ]
 

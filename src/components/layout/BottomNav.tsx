@@ -1,4 +1,4 @@
-import { ListChecks, CheckCircle2, Users, RefreshCcw, Award } from 'lucide-react'
+import { ListChecks, CheckCircle2, Users, RefreshCcw, Award, Trophy } from 'lucide-react'
 import type { Tab } from '@/lib/constants'
 
 interface Props {
@@ -14,6 +14,7 @@ export function BottomNav({ activeTab, onTabChange, intercambiosBadge, logrosBad
     { id: 'detalle', label: 'Detalle', icon: (a) => <ListChecks className="w-6 h-6" strokeWidth={a ? 3 : 2} /> },
     { id: 'comparar', label: 'Ranking', icon: (a) => <Users className="w-6 h-6" strokeWidth={a ? 3 : 2} /> },
     { id: 'intercambios', label: 'Canjes', icon: (a) => <RefreshCcw className="w-6 h-6" strokeWidth={a ? 3 : 2} />, badge: intercambiosBadge },
+    { id: 'prode', label: 'Prode', icon: (a) => <Trophy className="w-6 h-6" strokeWidth={a ? 3 : 2} /> },
     { id: 'logros', label: 'Logros', icon: (a) => <Award className="w-6 h-6" strokeWidth={a ? 3 : 2} />, badge: logrosBadge },
   ]
 

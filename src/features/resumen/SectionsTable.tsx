@@ -1,7 +1,7 @@
 import { ChevronRight, Search } from 'lucide-react'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import { SectionAvatar } from '@/components/ui/SectionAvatar'
-import { getSectionUniqueCount, getSectionRepeatedCount, getSectionPercentage } from '@/lib/stats'
+import { getSectionUniqueCount, getSectionRepeatedCount, getSectionPercentage, isExtrasSection } from '@/lib/stats'
 import type { AlbumSection } from '@/types/album'
 
 interface Props {
@@ -42,12 +42,22 @@ export function SectionsTable({ data, searchTerm, onGoToDetail }: Props) {
             const uniqueCount = getSectionUniqueCount(item)
             const repeatedCount = getSectionRepeatedCount(item)
             const percentage = getSectionPercentage(item)
+            const isExtra = isExtrasSection(item)
             return (
-              <tr key={index} className="hover:bg-zinc-50/80 transition-colors group cursor-pointer" onClick={() => onGoToDetail(item.section)}>
+              <tr
+                key={index}
+                className={`${isExtra ? 'bg-red-50/30 hover:bg-red-50/60' : 'hover:bg-zinc-50/80'} transition-colors group cursor-pointer`}
+                onClick={() => onGoToDetail(item.section)}
+              >
                 <td className="px-6 py-3 lg:py-2.5 whitespace-nowrap text-sm font-bold text-zinc-900">
                   <div className="flex items-center gap-3">
                     <SectionAvatar section={item} />
-                    {item.section}
+                    <span>{item.section}</span>
+                    {isExtra && (
+                      <span className="px-2 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-200 text-[10px] font-black uppercase tracking-wide">
+                        Extra
+                      </span>
+                    )}
                   </div>
                 </td>
                 <td className="px-6 py-3 lg:py-2.5 whitespace-nowrap text-sm text-center font-medium">

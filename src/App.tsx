@@ -8,6 +8,7 @@ import { useTrades } from '@/hooks/useTrades'
 import { ChatProvider, useChat } from '@/contexts/ChatContext'
 import { useGroups } from '@/hooks/useGroups'
 import { useLeaderboard } from '@/hooks/useLeaderboard'
+import { useProde } from '@/hooks/useProde'
 import { LEGACY_PROJECT_SLUG, PROJECT_SLUG } from '@/lib/constants'
 import { getStickerByCanonicalCode } from '@/lib/album'
 
@@ -17,6 +18,7 @@ import { DetalleView } from '@/views/DetalleView'
 import { CompararView } from '@/views/CompararView'
 import { IntercambiosView } from '@/views/IntercambiosView'
 import { LogrosView } from '@/views/LogrosView'
+import { ProdeView } from '@/views/ProdeView'
 
 import { ContextualHeader } from '@/components/layout/ContextualHeader'
 import { DesktopTabs } from '@/components/layout/DesktopTabs'
@@ -140,6 +142,7 @@ function AppShell() {
   } = useGroups()
 
   const { leaderboard, isLoadingLeaderboard, updateUserAvatar } = useLeaderboard(compareFilter, groupsRevision)
+  const prode = useProde(sessionUserId ?? 'local-user', userName)
   const handleAvatarChange = (nextAvatarKey: string | null) => {
     setAvatarKey(nextAvatarKey)
     if (sessionUserId) updateUserAvatar(sessionUserId, nextAvatarKey)
@@ -315,6 +318,24 @@ function AppShell() {
                   onAcceptProposal={handleAcceptTradeProposal}
                   onRejectProposal={handleRejectTradeProposal}
                   onCancelProposal={handleCancelTradeProposal}
+                />
+              )}
+
+              {activeTab === 'prode' && (
+                <ProdeView
+                  userId={sessionUserId ?? 'local-user'}
+                  userName={userName}
+                  matches={prode.matches}
+                  predictions={prode.predictions}
+                  predictionsByMatch={prode.predictionsByMatch}
+                  pendingMatches={prode.pendingMatches}
+                  rankingGeneral={prode.rankingGeneral}
+                  primaryGroup={prode.primaryGroup}
+                  groupRanking={prode.groupRanking}
+                  groups={prode.groups}
+                  onSavePredictions={prode.savePredictions}
+                  onUpdateResult={prode.updateResult}
+                  onCreateGroup={prode.createGroup}
                 />
               )}
 

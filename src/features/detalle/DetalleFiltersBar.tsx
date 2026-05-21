@@ -48,7 +48,7 @@ export function DetalleFiltersBar({
               backgroundSize: '1.5em 1.5em',
             }}
           >
-            <option value="all">Todo el álbum ({stats.totalCompleted}/{stats.totalNeeded})</option>
+            <option value="all">Todo ({stats.totalCompleted}/{stats.totalNeeded})</option>
             {albumData.map(s => {
               const uniqueCount = Object.values(s.collected).filter(v => v > 0).length
               return <option key={s.section} value={s.section}>{s.section} ({uniqueCount}/{s.needed})</option>

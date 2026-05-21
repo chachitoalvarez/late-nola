@@ -1,5 +1,9 @@
 import type { AlbumSection, AlbumStats } from '@/types/album'
 
+export function isExtrasSection(section: AlbumSection): boolean {
+  return section.seccion === 'Extras Coca-Cola' || section.codigoBase === 'CC'
+}
+
 export function getProgressColor(percentage: number): string {
   if (percentage === 100) return 'bg-emerald-500'
   if (percentage >= 50) return 'bg-blue-500'
@@ -24,6 +28,9 @@ export function getSectionPercentage(section: AlbumSection): number {
 }
 
 export function computeStats(albumData: AlbumSection[]): AlbumStats {
+  const baseSections = albumData.filter(section => !isExtrasSection(section))
+  const extraSections = albumData.filter(isExtrasSection)
+
   const totalNeeded = albumData.reduce((acc, curr) => acc + curr.needed, 0)
   const totalCompleted = albumData.reduce(
     (acc, curr) => acc + getSectionUniqueCount(curr),
@@ -33,6 +40,32 @@ export function computeStats(albumData: AlbumSection[]): AlbumStats {
     (acc, curr) => acc + getSectionRepeatedCount(curr),
     0
   )
+  const baseNeeded = baseSections.reduce((acc, curr) => acc + curr.needed, 0)
+  const baseCompleted = baseSections.reduce((acc, curr) => acc + getSectionUniqueCount(curr), 0)
+  const baseRepeated = baseSections.reduce((acc, curr) => acc + getSectionRepeatedCount(curr), 0)
+  const extrasNeeded = extraSections.reduce((acc, curr) => acc + curr.needed, 0)
+  const extrasCompleted = extraSections.reduce((acc, curr) => acc + getSectionUniqueCount(curr), 0)
+  const extrasRepeated = extraSections.reduce((acc, curr) => acc + getSectionRepeatedCount(curr), 0)
+
   const percentage = totalNeeded === 0 ? 0 : Math.round((totalCompleted / totalNeeded) * 100)
-  return { totalNeeded, totalCompleted, percentage, missing: totalNeeded - totalCompleted, totalRepeated }
+  const basePercentage = baseNeeded === 0 ? 0 : Math.round((baseCompleted / baseNeeded) * 100)
+  const extrasPercentage = extrasNeeded === 0 ? 0 : Math.round((extrasCompleted / extrasNeeded) * 100)
+
+  return {
+    totalNeeded,
+    totalCompleted,
+    percentage,
+    missing: totalNeeded - totalCompleted,
+    totalRepeated,
+    baseNeeded,
+    baseCompleted,
+    basePercentage,
+    baseMissing: baseNeeded - baseCompleted,
+    baseRepeated,
+    extrasNeeded,
+    extrasCompleted,
+    extrasPercentage,
+    extrasMissing: extrasNeeded - extrasCompleted,
+    extrasRepeated,
+  }
 }

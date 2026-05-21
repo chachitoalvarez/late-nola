@@ -3,7 +3,7 @@ import type { Sticker, AlbumSection, StickerType, TipoColeccion, Acabado } from 
 
 const CACHE_KEY = 'latenola:stickers_catalog'
 const CACHE_VERSION_KEY = 'latenola:stickers_catalog_version'
-const CATALOG_VERSION = '2026-base-980-v1'
+const CATALOG_VERSION = '2026-base-980-plus-coca-cola-992-v1'
 
 interface StickerRow {
   id: string
@@ -41,16 +41,17 @@ function buildSections(stickers: Sticker[]): AlbumSection[] {
   const sectionMap = new Map<string, { stickers: Sticker[]; seccion: string }>()
 
   for (const s of stickers) {
-    const existing = sectionMap.get(s.subseccion)
+    const displaySection = s.seccion === 'Extras Coca-Cola' ? 'Extras Coca-Cola' : s.subseccion
+    const existing = sectionMap.get(displaySection)
     if (existing) {
       existing.stickers.push(s)
     } else {
-      sectionMap.set(s.subseccion, { stickers: [s], seccion: s.seccion })
+      sectionMap.set(displaySection, { stickers: [s], seccion: s.seccion })
     }
   }
 
   const sections: AlbumSection[] = []
-  for (const [subseccion, { stickers: stickerList, seccion }] of sectionMap) {
+  for (const [displaySection, { stickers: stickerList, seccion }] of sectionMap) {
     const sorted = stickerList.sort((a, b) => a.numeroOrden - b.numeroOrden)
     const first = sorted[0]
     const last = sorted[sorted.length - 1]
@@ -58,11 +59,11 @@ function buildSections(stickers: Sticker[]): AlbumSection[] {
     const codigoBase = prefixMatch ? prefixMatch[1] : ''
 
     sections.push({
-      section: subseccion,
+      section: displaySection,
       needed: stickerList.length,
       collected: {},
       seccion,
-      subseccion,
+      subseccion: displaySection,
       codigoBase,
       ordenInicio: first.numeroOrden,
       ordenFin: last.numeroOrden,
@@ -80,14 +81,15 @@ function buildIndices(stickers: Sticker[]) {
 
   for (const s of stickers) {
     byCode.set(s.codigoFigura, s)
+    const displaySection = s.seccion === 'Extras Coca-Cola' ? 'Extras Coca-Cola' : s.subseccion
 
-    const arr = bySubseccion.get(s.subseccion) ?? []
+    const arr = bySubseccion.get(displaySection) ?? []
     arr.push(s)
-    bySubseccion.set(s.subseccion, arr)
+    bySubseccion.set(displaySection, arr)
 
-    const codes = codesBySubseccion.get(s.subseccion) ?? new Set<string>()
+    const codes = codesBySubseccion.get(displaySection) ?? new Set<string>()
     codes.add(s.codigoFigura)
-    codesBySubseccion.set(s.subseccion, codes)
+    codesBySubseccion.set(displaySection, codes)
   }
 
   return { byCode, bySubseccion, codesBySubseccion }
@@ -120,7 +122,7 @@ function loadFromLocalStorage(): Sticker[] | null {
     const raw = localStorage.getItem(CACHE_KEY)
     if (!raw) return null
     const parsed = JSON.parse(raw) as StickerRow[]
-    if (!Array.isArray(parsed) || parsed.length !== 980) return null
+    if (!Array.isArray(parsed) || parsed.length !== 992) return null
     return parsed.map(rowToSticker)
   } catch {
     return null
@@ -152,7 +154,7 @@ export async function loadCatalog(): Promise<CatalogData> {
     .order('numero_orden', { ascending: true })
     .limit(1000)
 
-  if (error || !data || data.length === 0) {
+  if (error || !data || data.length < 992) {
     throw new Error(`Failed to load sticker catalog: ${error?.message ?? 'empty result'}`)
   }
 
