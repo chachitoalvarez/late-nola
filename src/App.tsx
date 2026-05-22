@@ -21,7 +21,10 @@ import { LogrosView } from '@/views/LogrosView'
 import { ProdeView } from '@/views/ProdeView'
 
 import { ContextualHeader } from '@/components/layout/ContextualHeader'
-import { DesktopTabs } from '@/components/layout/DesktopTabs'
+import {
+  DESKTOP_SIDEBAR_STORAGE_KEY,
+  DesktopSidebarNav,
+} from '@/components/layout/DesktopSidebarNav'
 import { BottomNav } from '@/components/layout/BottomNav'
 import { CelebrationOverlay } from '@/components/overlays/CelebrationOverlay'
 import { ProfileDrawer } from '@/components/drawers/ProfileDrawer'
@@ -66,6 +69,13 @@ function AppShell() {
   const [seenAchievementsCount, setSeenAchievementsCount] = useState(0)
   const [avatarKey, setAvatarKey] = useState<string | null>(null)
   const [tradeProposals, setTradeProposals] = useState<TradeProposal[]>([])
+  const [isDesktopSidebarExpanded, setIsDesktopSidebarExpanded] = useState(() => {
+    try {
+      const stored = window.localStorage.getItem(DESKTOP_SIDEBAR_STORAGE_KEY)
+      if (stored !== null) return stored === 'true'
+    } catch { /* ignore */ }
+    return window.innerWidth >= 1280
+  })
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -200,7 +210,7 @@ function AppShell() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50/50 p-3 sm:p-4 lg:p-6 font-sans text-zinc-800 overflow-x-hidden pb-24 md:pb-8 relative">
+    <div className="min-h-screen bg-zinc-50/50 font-sans text-zinc-800 overflow-x-hidden relative">
       <style>{`
         @keyframes confettiFall {
           0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
@@ -219,8 +229,21 @@ function AppShell() {
       `}</style>
 
       {celebration && <CelebrationOverlay celebration={celebration} />}
+      <DesktopSidebarNav
+        activeTab={activeTab}
+        onTabChange={setTab}
+        isExpanded={isDesktopSidebarExpanded}
+        onExpandedChange={setIsDesktopSidebarExpanded}
+      />
 
-      <div className="max-w-6xl mx-auto space-y-4 lg:space-y-5">
+      <main
+        className={`min-h-screen w-full p-3 pb-24 transition-[margin,width] duration-200 sm:p-4 md:pb-8 lg:p-6 ${
+          isDesktopSidebarExpanded
+            ? 'md:ml-[224px] md:w-[calc(100vw-224px)]'
+            : 'md:ml-[80px] md:w-[calc(100vw-80px)]'
+        }`}
+      >
+      <div className="max-w-7xl mx-auto space-y-4 lg:space-y-5">
         <ContextualHeader
           activeTab={activeTab}
           userName={userName}
@@ -229,16 +252,9 @@ function AppShell() {
           onProfileOpen={() => setIsProfileOpen(true)}
         />
 
-        <div className="space-y-4 lg:space-y-5 animate-in fade-in duration-500">
-          <div className={`bg-transparent sm:bg-white sm:rounded-[2rem] sm:shadow-sm sm:border sm:border-zinc-200/60 p-0 sm:p-5 lg:p-4 overflow-clip sm:overflow-visible${activeTab === 'detalle' ? ' -mt-4 sm:mt-0' : ''}`}>
-            <DesktopTabs
-              activeTab={activeTab}
-              onTabChange={setTab}
-              intercambiosBadge={intercambiosBadge}
-              logrosBadge={logrosBadge}
-            />
-
-            <div className="p-0">
+        <div className="animate-in fade-in duration-500">
+          <div className={`min-w-0 bg-transparent sm:bg-white sm:rounded-[2rem] sm:shadow-sm sm:border sm:border-zinc-200/60 p-0 sm:p-5 lg:p-4 overflow-clip sm:overflow-visible${activeTab === 'detalle' ? ' -mt-4 sm:mt-0' : ''}`}>
+            <div className="min-w-0 p-0">
               {activeTab === 'resumen' && (
                 <ResumenView
                   stats={stats}
@@ -353,6 +369,7 @@ function AppShell() {
           logrosBadge={logrosBadge}
         />
       </div>
+      </main>
 
       <ProfileDrawer
         isOpen={isProfileOpen}
