@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { CalendarDays, Clipboard, Clock, Share2, ShieldCheck, Trophy, Users } from 'lucide-react'
+import { CalendarDays, ChevronDown, Clipboard, Clock, Globe2, Plus, Share2, ShieldCheck, Trophy, Users } from 'lucide-react'
 import { PRODE_FRIEND_PREDICTIONS } from '@/data/prodeData'
 import { calculatePredictionPoints, formatMatchTime, formatTimeToClose, getEffectiveMatchStatus, isMatchEditable } from '@/lib/prode'
 import type { ProdeGroup, ProdeMatch, ProdePrediction, ProdeRankingEntry } from '@/types/prode'
@@ -189,6 +189,7 @@ export function ProdeView({
   const [selectedMatch, setSelectedMatch] = useState<ProdeMatch | null>(null)
   const [drafts, setDrafts] = useState<Record<string, { home: number | ''; away: number | '' }>>({})
   const [groupName, setGroupName] = useState('')
+  const [rankingGroupFilter, setRankingGroupFilter] = useState('all')
   const [lastCreatedGroup, setLastCreatedGroup] = useState<ProdeGroup | null>(null)
   const [adminDraft, setAdminDraft] = useState<{ matchId: string; home: number | ''; away: number | ''; qualifiedTeamId: string }>({
     matchId: matches[0]?.id ?? '',
@@ -199,6 +200,8 @@ export function ProdeView({
 
   const currentUserRanking = rankingGeneral.find(row => row.userId === userId)
   const currentGroupRanking = groupRanking.find(row => row.userId === userId)
+  const selectedRankingGroup = groups.find(group => group.id === rankingGroupFilter) ?? null
+  const visibleRanking = rankingGroupFilter === 'all' ? rankingGeneral : groupRanking
   const nextMatch = [...matches]
     .filter(match => isMatchEditable(match))
     .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime())[0]
@@ -359,14 +362,42 @@ export function ProdeView({
       )}
 
       {section === 'ranking' && (
-        <div className="grid gap-4 lg:grid-cols-2">
-          <div className="space-y-3">
-            <h3 className="text-lg font-black text-zinc-900">Ranking del grupo</h3>
-            <RankingRows rows={groupRanking} />
+        <div className="space-y-4">
+          <div className="flex flex-col gap-3 rounded-3xl border border-zinc-200/60 bg-white p-4 shadow-sm md:flex-row md:items-center md:justify-between">
+            <div className="relative w-full md:max-w-sm">
+              <Globe2 className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-blue-600" strokeWidth={2.5} />
+              <select
+                value={rankingGroupFilter}
+                onChange={event => setRankingGroupFilter(event.target.value)}
+                className="h-12 w-full appearance-none rounded-2xl border border-zinc-200 bg-zinc-50 pl-11 pr-11 text-sm font-semibold text-zinc-900 transition-all focus:border-amber-500 focus:outline-none focus:ring-4 focus:ring-amber-500/20 md:h-11"
+              >
+                <option value="all">Todos (Global)</option>
+                {groups.length > 0 && (
+                  <optgroup label="Tus grupos">
+                    {groups.map(group => (
+                      <option key={group.id} value={group.id}>{group.name}</option>
+                    ))}
+                  </optgroup>
+                )}
+              </select>
+              <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" strokeWidth={2.5} />
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setSection('grupos')}
+              className="flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-amber-500 px-5 text-sm font-black text-white shadow-sm transition-all hover:bg-amber-600 hover:shadow-lg md:w-auto"
+            >
+              <Plus className="h-5 w-5" strokeWidth={2.5} />
+              Crear grupo
+            </button>
           </div>
+
           <div className="space-y-3">
-            <h3 className="text-lg font-black text-zinc-900">Ranking general</h3>
-            <RankingRows rows={rankingGeneral} />
+            <h3 className="text-lg font-black text-zinc-900">
+              {selectedRankingGroup ? `Ranking de ${selectedRankingGroup.name}` : 'Ranking general'}
+            </h3>
+            <RankingRows rows={visibleRanking} />
           </div>
         </div>
       )}
