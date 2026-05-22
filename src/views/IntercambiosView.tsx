@@ -40,7 +40,7 @@ export function IntercambiosView({
   const pendingReceivedCount = receivedProposals.filter(item => item.status === 'pending').length
 
   return (
-    <div className="flex flex-col items-center justify-center py-0 lg:py-2 sm:py-4 animate-in slide-in-from-right-4 duration-300 w-full max-w-3xl mx-auto">
+    <div className="w-full animate-in slide-in-from-right-4 space-y-5 duration-300">
       <IntercambiosTabs
         activeTab={intercambiosTab}
         onTabChange={setIntercambiosTab}
@@ -48,21 +48,22 @@ export function IntercambiosView({
         likedByThemCount={likedByThem.length + pendingReceivedCount}
       />
 
-      {intercambiosTab === 'explorar' && (
-        <div className="w-full max-w-[360px] mx-auto mt-2 lg:mt-1">
-          {isLoadingCandidates ? (
-            <div className="flex flex-col items-center justify-center min-h-[640px] gap-3 text-zinc-400">
-              <Loader2 className="w-8 h-8 animate-spin" strokeWidth={2} />
-              <p className="text-sm font-medium">Buscando coleccionistas...</p>
-            </div>
-          ) : (
-            <SwipeableCard user={currentTradeUser} showMatchAnimation={showMatchAnimation} onSwipe={onSwipe} />
-          )}
-        </div>
-      )}
+      <div className="flex w-full max-w-3xl flex-col items-center justify-center py-0 sm:py-2 lg:py-1 mx-auto">
+        {intercambiosTab === 'explorar' && (
+          <div className="w-full max-w-[360px] mx-auto mt-2 lg:mt-1">
+            {isLoadingCandidates ? (
+              <div className="flex flex-col items-center justify-center min-h-[640px] gap-3 text-zinc-400">
+                <Loader2 className="w-8 h-8 animate-spin" strokeWidth={2} />
+                <p className="text-sm font-medium">Buscando coleccionistas...</p>
+              </div>
+            ) : (
+              <SwipeableCard user={currentTradeUser} showMatchAnimation={showMatchAnimation} onSwipe={onSwipe} />
+            )}
+          </div>
+        )}
 
-      {intercambiosTab === 'conexiones' && (
-        <div className="w-full bg-white rounded-[2rem] shadow-sm border border-zinc-200/60 overflow-hidden animate-in fade-in slide-in-from-bottom-4">
+        {intercambiosTab === 'conexiones' && (
+          <div className="w-full bg-white rounded-[2rem] shadow-sm border border-zinc-200/60 overflow-hidden animate-in fade-in slide-in-from-bottom-4">
           <div className="p-5 lg:p-4 border-b border-zinc-100 flex items-center justify-between bg-gradient-to-r from-emerald-50 to-white">
             <h3 className="text-xl lg:text-lg font-black text-zinc-900 flex items-center gap-2.5 tracking-tight">
               <div className="p-2 bg-emerald-100 rounded-xl">
@@ -80,11 +81,11 @@ export function IntercambiosView({
               <ConnectionCard key={user.id} connection={user} onOpenChat={onOpenChat} />
             ))}
           </div>
-        </div>
-      )}
+          </div>
+        )}
 
-      {intercambiosTab === 'dados' && (
-        <div className="w-full bg-white rounded-[2rem] shadow-sm border border-zinc-200/60 overflow-hidden animate-in fade-in slide-in-from-bottom-4">
+        {intercambiosTab === 'dados' && (
+          <div className="w-full bg-white rounded-[2rem] shadow-sm border border-zinc-200/60 overflow-hidden animate-in fade-in slide-in-from-bottom-4">
           <div className="p-5 lg:p-4 border-b border-zinc-100 bg-zinc-50/50">
             <h3 className="text-xl lg:text-lg font-black text-zinc-900 tracking-tight">Enviados</h3>
             <p className="text-sm text-zinc-500 font-medium mt-1">Propuestas pendientes y solicitudes enviadas.</p>
@@ -98,11 +99,11 @@ export function IntercambiosView({
               <div className="p-12 text-center text-zinc-500 font-medium">Aún no enviaste propuestas. Abrí el perfil de otro usuario para proponer un canje.</div>
             )}
           </div>
-        </div>
-      )}
+          </div>
+        )}
 
-      {intercambiosTab === 'recibidos' && (
-        <div className="w-full bg-white rounded-[2rem] shadow-sm border border-zinc-200/60 overflow-hidden animate-in fade-in slide-in-from-bottom-4">
+        {intercambiosTab === 'recibidos' && (
+          <div className="w-full bg-white rounded-[2rem] shadow-sm border border-zinc-200/60 overflow-hidden animate-in fade-in slide-in-from-bottom-4">
           <div className="p-5 lg:p-4 border-b border-zinc-100 bg-gradient-to-r from-red-50 to-white">
             <h3 className="text-xl lg:text-lg font-black text-zinc-900 tracking-tight">Recibidos</h3>
             <p className="text-sm text-zinc-500 font-medium mt-1">Revisá propuestas y solicitudes pendientes.</p>
@@ -126,8 +127,9 @@ export function IntercambiosView({
               </div>
             )}
           </div>
-        </div>
-      )}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

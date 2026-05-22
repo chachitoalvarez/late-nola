@@ -23,6 +23,14 @@ interface Props {
 type ProdeSection = 'home' | 'fixture' | 'ranking' | 'grupos' | 'admin'
 type MatchFilter = 'all' | 'today' | 'upcoming' | 'pending' | 'finished'
 
+const PRODE_TABS: Array<{ id: ProdeSection; label: string }> = [
+  { id: 'home', label: 'Inicio' },
+  { id: 'fixture', label: 'Fixture' },
+  { id: 'ranking', label: 'Ranking' },
+  { id: 'grupos', label: 'Grupos' },
+  { id: 'admin', label: 'Admin' },
+]
+
 const STATUS_LABELS: Record<string, string> = {
   open: 'Abierto',
   closing_soon: 'Cierra pronto',
@@ -32,6 +40,32 @@ const STATUS_LABELS: Record<string, string> = {
   points_calculated: 'Puntos calculados',
   postponed: 'Postergado',
   cancelled: 'Cancelado',
+}
+
+function ProdeTabs({ activeTab, onChange }: { activeTab: ProdeSection; onChange: (tab: ProdeSection) => void }) {
+  return (
+    <div className="-mx-1 overflow-x-auto border-b border-zinc-100 px-1 pb-1">
+      <div className="flex min-w-max items-end gap-1.5 lg:gap-2">
+        {PRODE_TABS.map(tab => {
+          const isActive = activeTab === tab.id
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => onChange(tab.id)}
+              className={`rounded-t-xl border-b-2 px-3 py-2 text-xs font-bold transition-all lg:text-sm ${
+                isActive
+                  ? 'border-amber-500 bg-amber-50/40 text-amber-600'
+                  : 'border-transparent text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800'
+              }`}
+            >
+              {tab.label}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
 }
 
 function scoreValue(value: string): number | null {
@@ -211,28 +245,7 @@ export function ProdeView({
 
   return (
     <div className="animate-in slide-in-from-right-4 space-y-5 duration-300">
-      <div className="rounded-[2rem] border border-amber-100 bg-gradient-to-br from-amber-50 to-white p-5 shadow-sm">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <p className="text-xs font-black uppercase tracking-wider text-amber-600">Prode Late Nola</p>
-            <h2 className="mt-1 text-2xl font-black tracking-tight text-zinc-900">Predicciones del Mundial</h2>
-            <p className="mt-1 max-w-2xl text-sm font-semibold text-zinc-600">
-              Cargá tus predicciones del Mundial, competí con tus amigos y seguí el ranking partido a partido.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {(['home', 'fixture', 'ranking', 'grupos', 'admin'] as ProdeSection[]).map(item => (
-              <button
-                key={item}
-                onClick={() => setSection(item)}
-                className={`rounded-2xl px-4 py-2 text-sm font-black transition ${section === item ? 'bg-amber-500 text-white shadow-md' : 'bg-white text-zinc-600 hover:bg-zinc-50'}`}
-              >
-                {item === 'home' ? 'Inicio' : item === 'grupos' ? 'Grupos' : item === 'admin' ? 'Admin' : item[0].toUpperCase() + item.slice(1)}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
+      <ProdeTabs activeTab={section} onChange={setSection} />
 
       {section === 'home' && (
         <div className="grid gap-4 lg:grid-cols-[1.2fr_.8fr]">
