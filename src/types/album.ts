@@ -11,15 +11,15 @@ export type StickerType =
   | 'estadio'
 
 export type TipoColeccion = 'normal' | 'especial'
-export type Acabado = 'standard' | 'foil'
+export type Acabado = 'standard' | 'foil' | 'coca-cola'
 
 export interface Sticker {
   /** Internal ID: wc2026:base:${codigoFigura} */
   id: string
-  numeroOrden: number          // 1..980
-  seccion: string              // "Apertura" | "Grupo A" .. "Grupo L" | "Cierre"
+  numeroOrden: number          // 1..994 (1..980 base, 981..994 extras)
+  seccion: string              // "Apertura" | "Grupo A" .. "Grupo L" | "Cierre" | "Extras Coca-Cola"
   subseccion: string           // "Intro torneo" | "México" | "Argentina" | "Historia de la Copa"
-  codigoFigura: string         // canónico con padding: "ARG001"
+  codigoFigura: string         // canonico: "ARG001", "CC01"
   paisEquipo: string           // "Argentina" o "" para secciones especiales
   nombreFigura: string         // descripción visible
   nombreJugador: string        // nombre del jugador (solo cuando tipoFigura === 'jugador')

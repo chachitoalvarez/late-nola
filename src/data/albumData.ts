@@ -8,7 +8,7 @@
  * All other modules import from here — they never touch the JSON or Supabase directly.
  */
 
-import rawData from './panini_mundial_2026_992_con_coca_cola.json'
+import rawData from './panini_mundial_2026_994_con_coca_cola.json'
 import type { Sticker, AlbumSection, StickerType, TipoColeccion, Acabado } from '@/types/album'
 import { loadCatalog, type CatalogData } from '@/services/catalog.service'
 

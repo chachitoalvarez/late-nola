@@ -1,5 +1,5 @@
 /**
- * Seed script: loads panini_mundial_2026_980_limpio.json into the Supabase figuritas table.
+ * Seed script: loads the 980 base stickers plus 14 Coca-Cola extras into the Supabase figuritas table.
  *
  * Usage:
  *   node scripts/seed-stickers.mjs
@@ -26,14 +26,14 @@ if (!url || !key) {
 
 const supabase = createClient(url, key)
 
-const jsonPath = resolve(__dirname, '../src/data/panini_mundial_2026_980_limpio.json')
+const jsonPath = resolve(__dirname, '../src/data/panini_mundial_2026_994_con_coca_cola.json')
 const raw = JSON.parse(readFileSync(jsonPath, 'utf-8'))
 const figuritas = raw.figuritas
 
 console.log(`Loaded ${figuritas.length} figuritas from JSON`)
 
 const rows = figuritas.map(f => ({
-  id: `wc2026:base:${f.codigo_figura}`,
+  id: `wc2026:${f.seccion === 'Extras Coca-Cola' ? 'extras-coca-cola' : 'base'}:${f.codigo_figura}`,
   numero_orden: f.numero_orden,
   seccion: f.seccion,
   subseccion: f.subseccion,
@@ -49,6 +49,16 @@ const rows = figuritas.map(f => ({
 
 const BATCH_SIZE = 200
 let inserted = 0
+
+const { error: deleteExtrasError } = await supabase
+  .from('figuritas')
+  .delete()
+  .eq('seccion', 'Extras Coca-Cola')
+
+if (deleteExtrasError) {
+  console.error('Error deleting previous Coca-Cola extras:', deleteExtrasError.message)
+  process.exit(1)
+}
 
 for (let i = 0; i < rows.length; i += BATCH_SIZE) {
   const batch = rows.slice(i, i + BATCH_SIZE)

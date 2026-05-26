@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Award, CircleGauge, Layers, Package, Sparkles } from 'lucide-react'
+import { Award, CircleGauge, Layers, Package } from 'lucide-react'
 import type { AlbumStats } from '@/types/album'
 
 const CARD_CLASS = 'bg-white rounded-3xl p-5 lg:p-3.5 shadow-sm border border-zinc-200/60 flex items-center gap-4 lg:gap-3 text-left hover:shadow-md transition-shadow h-[104px] lg:h-[96px] min-w-0'
@@ -40,71 +40,42 @@ export function StatsCards({ stats, unlockedAchievementsCount, totalAchievements
     : unlockedAchievementsCount
 
   return (
-    <div className="space-y-3 lg:space-y-3.5">
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-3.5">
-        <MetricCard
-          icon={<CircleGauge className="h-6 w-6 lg:h-5 lg:w-5" strokeWidth={2.5} />}
-          iconClassName="bg-amber-50 text-amber-600 border-amber-100"
-          label="Avance"
-          value={`${stats.basePercentage}%`}
-          ariaLabel={`Avance del album base: ${stats.basePercentage} por ciento`}
-        />
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-3.5">
+      <MetricCard
+        icon={<CircleGauge className="h-6 w-6 lg:h-5 lg:w-5" strokeWidth={2.5} />}
+        iconClassName="bg-amber-50 text-amber-600 border-amber-100"
+        label="Avance"
+        value={`${stats.basePercentage}%`}
+        ariaLabel={`Avance del album base: ${stats.basePercentage} por ciento`}
+      />
 
-        <MetricCard
-          icon={<Package className="h-6 w-6 lg:h-5 lg:w-5" strokeWidth={2.5} />}
-          iconClassName="bg-emerald-50 text-emerald-600 border-emerald-100"
-          label="Pegadas"
-          value={stats.baseCompleted}
-          ariaLabel={`Figuritas pegadas del album base: ${stats.baseCompleted} de ${stats.baseNeeded}`}
-        />
+      <MetricCard
+        icon={<Package className="h-6 w-6 lg:h-5 lg:w-5" strokeWidth={2.5} />}
+        iconClassName="bg-emerald-50 text-emerald-600 border-emerald-100"
+        label="Pegadas"
+        value={stats.baseCompleted}
+        ariaLabel={`Figuritas pegadas del album base: ${stats.baseCompleted} de ${stats.baseNeeded}`}
+      />
 
-        <MetricCard
-          icon={<Layers className="h-6 w-6 lg:h-5 lg:w-5" strokeWidth={2.5} />}
-          iconClassName="bg-orange-50 text-orange-600 border-orange-100"
-          label="Repetidas"
-          value={stats.baseRepeated}
-          ariaLabel={`Figuritas repetidas del album base: ${stats.baseRepeated}`}
-        />
+      <MetricCard
+        icon={<Layers className="h-6 w-6 lg:h-5 lg:w-5" strokeWidth={2.5} />}
+        iconClassName="bg-orange-50 text-orange-600 border-orange-100"
+        label="Repetidas"
+        value={stats.baseRepeated}
+        ariaLabel={`Figuritas repetidas del album base: ${stats.baseRepeated}`}
+      />
 
-        <MetricCard
-          icon={<Award className="h-6 w-6 lg:h-5 lg:w-5" strokeWidth={2.5} />}
-          iconClassName="bg-yellow-50 text-yellow-600 border-yellow-100"
-          label="Logros"
-          value={achievementsValue}
-          ariaLabel={
-            totalAchievementsCount > 0
-              ? `Logros desbloqueados: ${unlockedAchievementsCount} de ${totalAchievementsCount}`
-              : `Logros desbloqueados: ${unlockedAchievementsCount}`
-          }
-        />
-      </div>
-
-      {stats.extrasNeeded > 0 && (
-        <div
-          className="bg-red-50/70 border border-red-100 rounded-3xl px-4 py-3 lg:px-4 lg:py-3 flex items-center justify-between gap-3"
-          aria-label={`Extras Coca-Cola: ${stats.extrasCompleted} de ${stats.extrasNeeded} figuritas, ${stats.extrasRepeated} repetidas`}
-        >
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="p-2.5 rounded-2xl border bg-white text-red-600 border-red-100 shadow-sm flex-shrink-0">
-              <Sparkles className="h-5 w-5" strokeWidth={2.5} />
-            </div>
-            <div className="min-w-0">
-              <p className={LABEL_CLASS}>Extras Coca-Cola</p>
-              <p className="text-sm font-semibold text-zinc-600 leading-5">
-                Promocionales separadas del álbum base
-              </p>
-            </div>
-          </div>
-          <div className="text-right flex-shrink-0">
-            <p className="text-xl font-black text-zinc-900 tracking-tight leading-6 whitespace-nowrap">
-              {stats.extrasCompleted}/{stats.extrasNeeded}
-            </p>
-            <p className="text-xs font-bold text-red-600 leading-4 whitespace-nowrap">
-              {stats.extrasPercentage}% · {stats.extrasRepeated} rep.
-            </p>
-          </div>
-        </div>
-      )}
+      <MetricCard
+        icon={<Award className="h-6 w-6 lg:h-5 lg:w-5" strokeWidth={2.5} />}
+        iconClassName="bg-yellow-50 text-yellow-600 border-yellow-100"
+        label="Logros"
+        value={achievementsValue}
+        ariaLabel={
+          totalAchievementsCount > 0
+            ? `Logros desbloqueados: ${unlockedAchievementsCount} de ${totalAchievementsCount}`
+            : `Logros desbloqueados: ${unlockedAchievementsCount}`
+        }
+      />
     </div>
   )
 }

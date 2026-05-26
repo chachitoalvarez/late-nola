@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowLeft, Check, Minus, Pencil, Plus, SquareStack, Trash2, X } from 'lucide-react'
 import { getDisplayStickerCode, parseStickerCode, validateStickerCode } from '@/lib/stickerCode'
-import { formatStickerDisplayId } from '@/lib/album'
+import { formatStickerDisplayId, getStickerSectionKey } from '@/lib/album'
 import type { AlbumSection, Sticker } from '@/types/album'
 
 interface Props {
@@ -32,7 +32,7 @@ interface BatchSummary {
 }
 
 function getCurrentCount(albumData: AlbumSection[], sticker: Sticker): number {
-  const section = albumData.find(item => item.section === sticker.subseccion)
+  const section = albumData.find(item => item.section === getStickerSectionKey(sticker))
   return section?.collected[sticker.codigoFigura] ?? 0
 }
 
@@ -105,7 +105,9 @@ export function CodeEntryDrawer({ isOpen, mode, albumData, onClose, onConfirm, o
   }, [flow, isDesktop, isOpen])
 
   useEffect(() => {
-    if (prefix.length === 3 && prevPrefixLengthRef.current < 3) {
+    const isCompletePrefix = prefix.length === 3 || prefix === 'CC'
+    const wasIncompletePrefix = prevPrefixLengthRef.current < prefix.length
+    if (isCompletePrefix && wasIncompletePrefix) {
       requestAnimationFrame(() => numberInputRef.current?.focus())
     }
     prevPrefixLengthRef.current = prefix.length
@@ -139,7 +141,7 @@ export function CodeEntryDrawer({ isOpen, mode, albumData, onClose, onConfirm, o
 
   if (!isOpen) return null
 
-  const canSearch = prefix.length === 3 && number.length > 0
+  const canSearch = prefix.length >= 2 && number.length > 0
   const validation = canSearch ? validateStickerCode(`${prefix}${number}`) : null
   const displayCode = canSearch ? getDisplayStickerCode(prefix, number) : ''
 

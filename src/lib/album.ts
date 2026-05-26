@@ -18,12 +18,17 @@ export function getStickerByCanonicalCode(code: string): Sticker | null {
   return albumStickers.find(sticker => sticker.codigoFigura === code) ?? null
 }
 
+export function getStickerSectionKey(sticker: Sticker): string {
+  return sticker.seccion === 'Extras Coca-Cola' ? 'Extras Coca-Cola' : sticker.subseccion
+}
+
 /**
  * Devuelve el ID legible para mostrar en la UI (sin padding).
  * Útil para chips: "ARG001" → "ARG1", "FWC008" → "FWC8".
  * Si querés el canónico (con padding), usá sticker.codigoFigura directamente.
  */
 export function formatStickerDisplayId(codigoFigura: string): string {
+  if (codigoFigura.startsWith('CC')) return codigoFigura
   const match = codigoFigura.match(/^([A-Z]+)(\d+)$/)
   if (!match) return codigoFigura
   const [, prefix, num] = match

@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const repoRoot = path.resolve(__dirname, '..')
-const dataPath = path.join(repoRoot, 'src', 'data', 'panini_mundial_2026_album_base_980.json')
+const dataPath = path.join(repoRoot, 'src', 'data', 'panini_mundial_2026_994_con_coca_cola.json')
 
 const raw = JSON.parse(await fs.readFile(dataPath, 'utf8'))
 const stickers = raw.figuritas ?? []
@@ -13,7 +13,7 @@ const stickerCodes = new Set(stickers.map(sticker => sticker.codigo_figura))
 const prefixIndex = new Map()
 
 for (const sticker of stickers) {
-  const match = String(sticker.codigo_figura).match(/^([A-Z]{3})(\d{3})$/)
+  const match = String(sticker.codigo_figura).match(/^([A-Z]{2,4})(\d{1,3})$/)
   if (!match) continue
   const prefix = match[1]
   const number = Number(match[2])
@@ -25,12 +25,14 @@ for (const sticker of stickers) {
 function parseStickerCode(input) {
   if (!input) return null
   const cleaned = String(input).trim().toUpperCase().replace(/[\s\-_]/g, '')
-  const match = cleaned.match(/^([A-Z]{3})(\d{1,3})$/)
+  const match = cleaned.match(/^([A-Z]{2,4})(\d{1,3})$/)
   if (!match) return null
   return {
     prefix: match[1],
     number: match[2],
-    normalizedCode: `${match[1]}${match[2].padStart(3, '0')}`,
+    normalizedCode: stickerCodes.has(`${match[1]}${match[2].padStart(2, '0')}`)
+      ? `${match[1]}${match[2].padStart(2, '0')}`
+      : `${match[1]}${match[2].padStart(3, '0')}`,
   }
 }
 
@@ -51,6 +53,8 @@ const cases = [
   { input: 'CUW008', display: 'CUW008', normalized: 'CUW008' },
   { input: 'ARG 12', display: 'ARG12', normalized: 'ARG012' },
   { input: 'ARG-10', display: 'ARG10', normalized: 'ARG010' },
+  { input: 'CC 1', display: 'CC1', normalized: 'CC01' },
+  { input: 'CC01', display: 'CC01', normalized: 'CC01' },
 ]
 
 for (const { input, display, normalized } of cases) {

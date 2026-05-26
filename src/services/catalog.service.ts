@@ -3,7 +3,7 @@ import type { Sticker, AlbumSection, StickerType, TipoColeccion, Acabado } from 
 
 const CACHE_KEY = 'latenola:stickers_catalog'
 const CACHE_VERSION_KEY = 'latenola:stickers_catalog_version'
-const CATALOG_VERSION = '2026-base-980-plus-coca-cola-992-v1'
+const CATALOG_VERSION = '2026-base-980-plus-coca-cola-994-v1'
 
 interface StickerRow {
   id: string
@@ -122,7 +122,7 @@ function loadFromLocalStorage(): Sticker[] | null {
     const raw = localStorage.getItem(CACHE_KEY)
     if (!raw) return null
     const parsed = JSON.parse(raw) as StickerRow[]
-    if (!Array.isArray(parsed) || parsed.length !== 992) return null
+    if (!Array.isArray(parsed) || parsed.length !== 994) return null
     return parsed.map(rowToSticker)
   } catch {
     return null
@@ -154,7 +154,7 @@ export async function loadCatalog(): Promise<CatalogData> {
     .order('numero_orden', { ascending: true })
     .limit(1000)
 
-  if (error || !data || data.length < 992) {
+  if (error || !data || data.length < 994) {
     throw new Error(`Failed to load sticker catalog: ${error?.message ?? 'empty result'}`)
   }
 

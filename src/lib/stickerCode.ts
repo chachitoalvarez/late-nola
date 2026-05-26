@@ -20,6 +20,7 @@ export interface StickerCodeValidation {
 interface PrefixInfo {
   stickerCount: number
   numbers: Set<number>
+  codesByNumber: Map<number, string>
 }
 
 const prefixIndex = buildPrefixIndex()
@@ -28,14 +29,15 @@ function buildPrefixIndex(): Map<string, PrefixInfo> {
   const index = new Map<string, PrefixInfo>()
 
   for (const sticker of albumStickers) {
-    const match = sticker.codigoFigura.match(/^([A-Z]{2,4})(\d{3})$/)
+    const match = sticker.codigoFigura.match(/^([A-Z]{2,4})(\d{1,3})$/)
     if (!match) continue
 
     const prefix = match[1]
     const number = Number(match[2])
-    const current = index.get(prefix) ?? { stickerCount: 0, numbers: new Set<number>() }
+    const current = index.get(prefix) ?? { stickerCount: 0, numbers: new Set<number>(), codesByNumber: new Map<number, string>() }
     current.stickerCount += 1
     current.numbers.add(number)
+    current.codesByNumber.set(number, sticker.codigoFigura)
     index.set(prefix, current)
   }
 
@@ -46,14 +48,15 @@ function buildPrefixIndexFromCatalog(catalog: Sticker[]): Map<string, PrefixInfo
   const index = new Map<string, PrefixInfo>()
 
   for (const sticker of catalog) {
-    const match = sticker.codigoFigura.match(/^([A-Z]{2,4})(\d{3})$/)
+    const match = sticker.codigoFigura.match(/^([A-Z]{2,4})(\d{1,3})$/)
     if (!match) continue
 
     const prefix = match[1]
     const number = Number(match[2])
-    const current = index.get(prefix) ?? { stickerCount: 0, numbers: new Set<number>() }
+    const current = index.get(prefix) ?? { stickerCount: 0, numbers: new Set<number>(), codesByNumber: new Map<number, string>() }
     current.stickerCount += 1
     current.numbers.add(number)
+    current.codesByNumber.set(number, sticker.codigoFigura)
     index.set(prefix, current)
   }
 
@@ -90,7 +93,10 @@ export function normalizeStickerCode(prefixOrInput: string, number?: string): st
   const parsed = number === undefined
     ? parseStickerCode(prefixOrInput)
     : parseStickerCode(`${prefixOrInput}${number}`)
-  return parsed?.normalizedCode ?? null
+  if (!parsed) return null
+
+  const knownCode = prefixIndex.get(parsed.prefix)?.codesByNumber.get(Number(parsed.number))
+  return knownCode ?? parsed.normalizedCode
 }
 
 export function validateStickerCode(input: string | ParsedStickerCode, catalog: Sticker[] = albumStickers): StickerCodeValidation {
@@ -118,13 +124,14 @@ export function validateStickerCode(input: string | ParsedStickerCode, catalog: 
     }
   }
 
-  const sticker = catalog.find(item => item.codigoFigura === parsed.normalizedCode) ?? stickersByCode.get(parsed.normalizedCode) ?? null
+  const canonicalCode = prefixInfo.codesByNumber.get(number) ?? parsed.normalizedCode
+  const sticker = catalog.find(item => item.codigoFigura === canonicalCode) ?? stickersByCode.get(canonicalCode) ?? null
   if (!sticker) {
     return {
       status: 'not_found',
       prefix: parsed.prefix,
       number: parsed.number,
-      normalizedCode: parsed.normalizedCode,
+      normalizedCode: canonicalCode,
     }
   }
 
@@ -132,7 +139,7 @@ export function validateStickerCode(input: string | ParsedStickerCode, catalog: 
     status: 'valid',
     prefix: parsed.prefix,
     number: parsed.number,
-    normalizedCode: parsed.normalizedCode,
+    normalizedCode: canonicalCode,
     sticker,
   }
 }

@@ -1,10 +1,10 @@
--- Catalogo de las 980 figuritas del album Panini Mundial 2026.
+-- Catalogo de las 980 figuritas base del album Panini Mundial 2026 y extras promocionales.
 -- Tabla de referencia de solo lectura: la app lee desde aca y el seed usa service_role.
 
 create table if not exists public.figuritas (
   id              text primary key,          -- "wc2026:base:ARG001"
-  numero_orden    smallint not null unique,  -- 1..980
-  seccion         text not null,             -- "Apertura", "Grupo A", ..., "Cierre"
+  numero_orden    smallint not null unique,  -- 1..994
+  seccion         text not null,             -- "Apertura", "Grupo A", ..., "Cierre", "Extras Coca-Cola"
   subseccion      text not null,             -- "Mexico", "Argentina", ...
   codigo_figura   text not null unique,      -- "ARG001"
   pais_equipo     text not null default '',

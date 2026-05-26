@@ -2,7 +2,7 @@ import { useState, useMemo, useRef, useEffect } from 'react'
 import { albumData as initialAlbumData } from '@/data/albumData'
 import type { AlbumSection, DetailFilter, Sticker } from '@/types/album'
 import { computeStats } from '@/lib/stats'
-import { findStickerByCode, formatStickerDisplayId } from '@/lib/album'
+import { findStickerByCode, formatStickerDisplayId, getStickerSectionKey } from '@/lib/album'
 import { type Tab } from '@/lib/constants'
 import * as albumService from '@/services/album.service'
 
@@ -78,7 +78,7 @@ export function useAlbum(triggerCelebration: (type: 'sticker' | 'achievement' | 
 
     setAlbumData(prev => {
       const additionsBySection = validItems.reduce<Record<string, Record<string, number>>>((acc, item) => {
-        const section = item.sticker.subseccion
+        const section = getStickerSectionKey(item.sticker)
         acc[section] = {
           ...(acc[section] ?? {}),
           [item.sticker.codigoFigura]: (acc[section]?.[item.sticker.codigoFigura] ?? 0) + item.quantity,
@@ -117,7 +117,7 @@ export function useAlbum(triggerCelebration: (type: 'sticker' | 'achievement' | 
 
     setAlbumData(prev => {
       const discountsBySection = validItems.reduce<Record<string, Record<string, number>>>((acc, item) => {
-        const section = item.sticker.subseccion
+        const section = getStickerSectionKey(item.sticker)
         acc[section] = {
           ...(acc[section] ?? {}),
           [item.sticker.codigoFigura]: (acc[section]?.[item.sticker.codigoFigura] ?? 0) + item.quantity,
@@ -156,7 +156,7 @@ export function useAlbum(triggerCelebration: (type: 'sticker' | 'achievement' | 
   const jumpToStickerCode = (query: string) => {
     const sticker = findStickerByCode(query)
     if (!sticker) return false
-    setSelectedSection(sticker.subseccion)
+    setSelectedSection(getStickerSectionKey(sticker))
     setStickerSearchTerm(query)
     return true
   }
