@@ -11,6 +11,7 @@ import { useLeaderboard } from '@/hooks/useLeaderboard'
 import { useProde } from '@/hooks/useProde'
 import { LEGACY_PROJECT_SLUG, PROJECT_SLUG } from '@/lib/constants'
 import { getStickerByCanonicalCode } from '@/lib/album'
+import { canAccessProde as checkCanAccessProde } from '@/lib/prodeAccess'
 
 import { LoginView } from '@/views/LoginView'
 import { ResumenView } from '@/views/ResumenView'
@@ -153,6 +154,18 @@ function AppShell() {
 
   const { leaderboard, isLoadingLeaderboard, updateUserAvatar } = useLeaderboard(compareFilter, groupsRevision)
   const prode = useProde(sessionUserId ?? 'local-user', userName)
+  const canAccessProde = checkCanAccessProde({
+    userId: sessionUserId,
+    email: sessionEmail || authEmail,
+    username: userName,
+  })
+
+  useEffect(() => {
+    if (activeTab === 'prode' && !canAccessProde) {
+      setActiveTab('resumen')
+    }
+  }, [activeTab, canAccessProde, setActiveTab])
+
   const handleAvatarChange = (nextAvatarKey: string | null) => {
     setAvatarKey(nextAvatarKey)
     if (sessionUserId) updateUserAvatar(sessionUserId, nextAvatarKey)
@@ -234,6 +247,7 @@ function AppShell() {
         onTabChange={setTab}
         isExpanded={isDesktopSidebarExpanded}
         onExpandedChange={setIsDesktopSidebarExpanded}
+        canAccessProde={canAccessProde}
       />
 
       <main
@@ -337,7 +351,7 @@ function AppShell() {
                 />
               )}
 
-              {activeTab === 'prode' && (
+              {activeTab === 'prode' && canAccessProde && (
                 <ProdeView
                   userId={sessionUserId ?? 'local-user'}
                   userName={userName}
@@ -367,6 +381,7 @@ function AppShell() {
           onTabChange={setTab}
           intercambiosBadge={intercambiosBadge}
           logrosBadge={logrosBadge}
+          canAccessProde={canAccessProde}
         />
       </div>
       </main>

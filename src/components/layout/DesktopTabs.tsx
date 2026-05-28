@@ -6,6 +6,7 @@ interface Props {
   onTabChange: (tab: Tab) => void
   intercambiosBadge: number
   logrosBadge: number
+  canAccessProde?: boolean
 }
 
 const tabs: Array<{ id: Tab; label: string; icon: React.ReactNode }> = [
@@ -17,10 +18,12 @@ const tabs: Array<{ id: Tab; label: string; icon: React.ReactNode }> = [
   { id: 'logros', label: 'Logros', icon: <Award className="w-4 h-4" /> },
 ]
 
-export function DesktopTabs({ activeTab, onTabChange, intercambiosBadge, logrosBadge }: Props) {
+export function DesktopTabs({ activeTab, onTabChange, intercambiosBadge, logrosBadge, canAccessProde = true }: Props) {
+  const visibleTabs = tabs.filter(tab => canAccessProde || tab.id !== 'prode')
+
   return (
     <div className="hidden md:flex items-end gap-1.5 lg:gap-2 border-b border-zinc-100 mb-4 lg:mb-4 pb-1.5 lg:pb-1 px-0 pt-4 lg:pt-3">
-      {tabs.map(tab => {
+      {visibleTabs.map(tab => {
         const isActive = activeTab === tab.id
         const badge = tab.id === 'intercambios' ? intercambiosBadge : tab.id === 'logros' ? logrosBadge : 0
         return (

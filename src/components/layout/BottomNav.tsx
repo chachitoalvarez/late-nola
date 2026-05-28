@@ -6,12 +6,15 @@ interface Props {
   onTabChange: (tab: Tab) => void
   intercambiosBadge: number
   logrosBadge: number
+  canAccessProde: boolean
 }
 
-export function BottomNav({ activeTab, onTabChange, intercambiosBadge, logrosBadge }: Props) {
+export function BottomNav({ activeTab, onTabChange, intercambiosBadge, logrosBadge, canAccessProde }: Props) {
+  const visibleItems = navigationItems.filter(item => canAccessProde || item.id !== 'prode')
+
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-zinc-200/60 flex justify-around items-center h-20 pb-[env(safe-area-inset-bottom)] z-40 px-2 shadow-[0_-10px_40px_rgb(0,0,0,0.03)] pt-1">
-      {navigationItems.map(item => {
+      {visibleItems.map(item => {
         const isActive = activeTab === item.id
         const badge = item.id === 'intercambios' ? intercambiosBadge : item.id === 'logros' ? logrosBadge : 0
         return (

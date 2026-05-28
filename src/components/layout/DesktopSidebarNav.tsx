@@ -8,13 +8,16 @@ interface Props {
   onTabChange: (tab: Tab) => void
   isExpanded: boolean
   onExpandedChange: (isExpanded: boolean) => void
+  canAccessProde: boolean
 }
 
 export const DESKTOP_SIDEBAR_STORAGE_KEY = `${PROJECT_SLUG}:desktop-sidebar-expanded`
 export const DESKTOP_SIDEBAR_EXPANDED_WIDTH = 224
 export const DESKTOP_SIDEBAR_COLLAPSED_WIDTH = 80
 
-export function DesktopSidebarNav({ activeTab, onTabChange, isExpanded, onExpandedChange }: Props) {
+export function DesktopSidebarNav({ activeTab, onTabChange, isExpanded, onExpandedChange, canAccessProde }: Props) {
+  const visibleItems = navigationItems.filter(item => canAccessProde || item.id !== 'prode')
+
   useEffect(() => {
     try {
       window.localStorage.setItem(DESKTOP_SIDEBAR_STORAGE_KEY, String(isExpanded))
@@ -49,7 +52,7 @@ export function DesktopSidebarNav({ activeTab, onTabChange, isExpanded, onExpand
       </div>
 
       <nav className="flex flex-col gap-1" aria-label="Navegación principal">
-        {navigationItems.map(item => {
+        {visibleItems.map(item => {
           const isActive = activeTab === item.id
           return (
             <button
