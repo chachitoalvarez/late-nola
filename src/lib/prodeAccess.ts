@@ -6,7 +6,7 @@ interface ProdeAccessInput {
   username?: string | null
 }
 
-const DEFAULT_OWNER_USERNAMES = ['chacho', 'chachitoalvarez']
+const DEFAULT_OWNER_USERNAMES = ['alvarez_juan_ig']
 
 function splitList(value: string | undefined): string[] {
   return (value ?? '')
