@@ -22,7 +22,8 @@ interface Props {
 }
 
 type ProdeSection = 'home' | 'fixture' | 'ranking' | 'grupos' | 'admin'
-type MatchFilter = 'all' | 'today' | 'upcoming' | 'pending' | 'finished'
+type MatchStatusFilter = 'all' | 'upcoming' | 'finished'
+type MatchPhaseFilter = 'all' | 'group_stage' | 'round_of_32' | 'round_of_16' | 'quarter_final' | 'semi_final' | 'final'
 
 const PRODE_TABS: Array<{ id: ProdeSection; label: string }> = [
   { id: 'home', label: 'Inicio' },
@@ -42,6 +43,22 @@ const STATUS_LABELS: Record<string, string> = {
   postponed: 'Postergado',
   cancelled: 'Cancelado',
 }
+
+const FIXTURE_STATUS_FILTERS: Array<{ id: MatchStatusFilter; label: string }> = [
+  { id: 'all', label: 'Todos' },
+  { id: 'upcoming', label: 'Proximos' },
+  { id: 'finished', label: 'Finalizados' },
+]
+
+const FIXTURE_PHASE_FILTERS: Array<{ id: MatchPhaseFilter; label: string }> = [
+  { id: 'all', label: 'Todas las fases' },
+  { id: 'group_stage', label: 'Grupo' },
+  { id: 'round_of_32', label: '16vos' },
+  { id: 'round_of_16', label: '8vos' },
+  { id: 'quarter_final', label: '4tos' },
+  { id: 'semi_final', label: 'Semifinales' },
+  { id: 'final', label: 'Final' },
+]
 
 function ProdeTabs({
   activeTab,
@@ -197,7 +214,8 @@ export function ProdeView({
   onCreateGroup,
 }: Props) {
   const [section, setSection] = useState<ProdeSection>('home')
-  const [filter, setFilter] = useState<MatchFilter>('all')
+  const [statusFilter, setStatusFilter] = useState<MatchStatusFilter>('all')
+  const [phaseFilter, setPhaseFilter] = useState<MatchPhaseFilter>('all')
   const [selectedMatch, setSelectedMatch] = useState<ProdeMatch | null>(null)
   const [drafts, setDrafts] = useState<Record<string, { home: number | ''; away: number | '' }>>({})
   const [groupName, setGroupName] = useState('')
@@ -227,13 +245,12 @@ export function ProdeView({
   const filteredMatches = useMemo(() => {
     return matches.filter(match => {
       const status = getEffectiveMatchStatus(match)
-      if (filter === 'pending') return !predictionsByMatch.has(match.id) && ['open', 'closing_soon'].includes(status)
-      if (filter === 'upcoming') return ['open', 'closing_soon'].includes(status)
-      if (filter === 'finished') return ['finished', 'points_calculated'].includes(status)
-      if (filter === 'today') return new Date(match.startsAt).toDateString() === new Date().toDateString()
+      if (phaseFilter !== 'all' && match.phase !== phaseFilter) return false
+      if (statusFilter === 'upcoming') return ['open', 'closing_soon'].includes(status)
+      if (statusFilter === 'finished') return ['finished', 'points_calculated'].includes(status)
       return true
     })
-  }, [filter, matches, predictionsByMatch])
+  }, [matches, phaseFilter, statusFilter])
 
   const groupedMatches = useMemo(() => {
     const groups = new Map<string, ProdeMatch[]>()
@@ -355,16 +372,31 @@ export function ProdeView({
 
       {section === 'fixture' && (
         <div className="space-y-4">
-          <div className="flex flex-wrap gap-2">
-            {(['all', 'today', 'upcoming', 'pending', 'finished'] as MatchFilter[]).map(item => (
-              <button
-                key={item}
-                onClick={() => setFilter(item)}
-                className={`rounded-2xl px-4 py-2 text-sm font-black ${filter === item ? 'bg-amber-500 text-white' : 'bg-white text-zinc-600 border border-zinc-200'}`}
+          <div className="flex flex-col gap-3 rounded-3xl border border-zinc-200/60 bg-white p-3 shadow-sm md:flex-row md:items-center md:justify-between">
+            <div className="flex flex-wrap gap-2">
+              {FIXTURE_STATUS_FILTERS.map(item => (
+                <button
+                  key={item.id}
+                  onClick={() => setStatusFilter(item.id)}
+                  className={`rounded-2xl px-4 py-2 text-sm font-black ${statusFilter === item.id ? 'bg-amber-500 text-white' : 'bg-white text-zinc-600 border border-zinc-200'}`}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="relative w-full md:max-w-xs">
+              <select
+                value={phaseFilter}
+                onChange={event => setPhaseFilter(event.target.value as MatchPhaseFilter)}
+                className="h-11 w-full appearance-none rounded-2xl border border-zinc-200 bg-zinc-50 px-4 pr-10 text-sm font-bold text-zinc-900 outline-none transition-all focus:border-amber-500 focus:ring-4 focus:ring-amber-500/20"
               >
-                {item === 'all' ? 'Todos' : item === 'today' ? 'Hoy' : item === 'upcoming' ? 'Próximos' : item === 'pending' ? 'Pendientes' : 'Finalizados'}
-              </button>
-            ))}
+                {FIXTURE_PHASE_FILTERS.map(item => (
+                  <option key={item.id} value={item.id}>{item.label}</option>
+                ))}
+              </select>
+              <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" strokeWidth={2.5} />
+            </div>
           </div>
           {groupedMatches.map(([title, items]) => (
             <section key={title} className="space-y-3">
