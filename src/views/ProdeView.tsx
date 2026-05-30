@@ -24,6 +24,7 @@ interface Props {
 type ProdeSection = 'home' | 'fixture' | 'ranking' | 'grupos' | 'admin'
 type MatchStatusFilter = 'all' | 'upcoming' | 'finished'
 type MatchPhaseFilter = 'all' | 'group_stage' | 'round_of_32' | 'round_of_16' | 'quarter_final' | 'semi_final' | 'final'
+type MatchFixtureFilter = MatchPhaseFilter | `group_${string}`
 
 const PRODE_TABS: Array<{ id: ProdeSection; label: string }> = [
   { id: 'home', label: 'Inicio' },
@@ -50,9 +51,21 @@ const FIXTURE_STATUS_FILTERS: Array<{ id: MatchStatusFilter; label: string }> = 
   { id: 'finished', label: 'Finalizados' },
 ]
 
-const FIXTURE_PHASE_FILTERS: Array<{ id: MatchPhaseFilter; label: string }> = [
+const FIXTURE_PHASE_FILTERS: Array<{ id: MatchFixtureFilter; label: string }> = [
   { id: 'all', label: 'Todas las fases' },
   { id: 'group_stage', label: 'Grupo' },
+  { id: 'group_A', label: 'Grupo A' },
+  { id: 'group_B', label: 'Grupo B' },
+  { id: 'group_C', label: 'Grupo C' },
+  { id: 'group_D', label: 'Grupo D' },
+  { id: 'group_E', label: 'Grupo E' },
+  { id: 'group_F', label: 'Grupo F' },
+  { id: 'group_G', label: 'Grupo G' },
+  { id: 'group_H', label: 'Grupo H' },
+  { id: 'group_I', label: 'Grupo I' },
+  { id: 'group_J', label: 'Grupo J' },
+  { id: 'group_K', label: 'Grupo K' },
+  { id: 'group_L', label: 'Grupo L' },
   { id: 'round_of_32', label: '16vos' },
   { id: 'round_of_16', label: '8vos' },
   { id: 'quarter_final', label: '4tos' },
@@ -215,7 +228,7 @@ export function ProdeView({
 }: Props) {
   const [section, setSection] = useState<ProdeSection>('home')
   const [statusFilter, setStatusFilter] = useState<MatchStatusFilter>('all')
-  const [phaseFilter, setPhaseFilter] = useState<MatchPhaseFilter>('all')
+  const [phaseFilter, setPhaseFilter] = useState<MatchFixtureFilter>('all')
   const [selectedMatch, setSelectedMatch] = useState<ProdeMatch | null>(null)
   const [drafts, setDrafts] = useState<Record<string, { home: number | ''; away: number | '' }>>({})
   const [groupName, setGroupName] = useState('')
@@ -245,6 +258,7 @@ export function ProdeView({
   const filteredMatches = useMemo(() => {
     return matches.filter(match => {
       const status = getEffectiveMatchStatus(match)
+      if (phaseFilter.startsWith('group_')) return match.groupCode === phaseFilter.replace('group_', '')
       if (phaseFilter !== 'all' && match.phase !== phaseFilter) return false
       if (statusFilter === 'upcoming') return ['open', 'closing_soon'].includes(status)
       if (statusFilter === 'finished') return ['finished', 'points_calculated'].includes(status)
@@ -388,7 +402,7 @@ export function ProdeView({
             <div className="relative w-full md:max-w-xs">
               <select
                 value={phaseFilter}
-                onChange={event => setPhaseFilter(event.target.value as MatchPhaseFilter)}
+                onChange={event => setPhaseFilter(event.target.value as MatchFixtureFilter)}
                 className="h-11 w-full appearance-none rounded-2xl border border-zinc-200 bg-zinc-50 px-4 pr-10 text-sm font-bold text-zinc-900 outline-none transition-all focus:border-amber-500 focus:ring-4 focus:ring-amber-500/20"
               >
                 {FIXTURE_PHASE_FILTERS.map(item => (
