@@ -11,7 +11,7 @@ import { useLeaderboard } from '@/hooks/useLeaderboard'
 import { useProde } from '@/hooks/useProde'
 import { LEGACY_PROJECT_SLUG, PROJECT_SLUG } from '@/lib/constants'
 import { getStickerByCanonicalCode } from '@/lib/album'
-import { canAccessProde as checkCanAccessProde } from '@/lib/prodeAccess'
+import { canAccessProde as checkCanAccessProde, canManageProdeResults } from '@/lib/prodeAccess'
 
 import { LoginView } from '@/views/LoginView'
 import { ResumenView } from '@/views/ResumenView'
@@ -159,6 +159,7 @@ function AppShell() {
     email: sessionEmail || authEmail,
     username: userName,
   })
+  const canManageProde = canManageProdeResults({ username: userName })
 
   useEffect(() => {
     if (activeTab === 'prode' && !canAccessProde) {
@@ -363,8 +364,9 @@ function AppShell() {
                   primaryGroup={prode.primaryGroup}
                   groupRanking={prode.groupRanking}
                   groups={prode.groups}
+                  canManageResults={canManageProde}
                   onSavePredictions={prode.savePredictions}
-                  onUpdateResult={prode.updateResult}
+                  onUpdateResult={canManageProde ? prode.updateResult : () => undefined}
                   onCreateGroup={prode.createGroup}
                 />
               )}

@@ -43,3 +43,8 @@ export function canAccessProde({ userId, email, username }: ProdeAccessInput): b
     (normalizedUsername !== '' && allowedUsernames.includes(normalizedUsername))
   )
 }
+
+export function canManageProdeResults({ username }: ProdeAccessInput): boolean {
+  const normalizedUsername = username?.trim().toLowerCase().replace(/^@/, '') ?? ''
+  return DEFAULT_OWNER_USERNAMES.includes(normalizedUsername)
+}

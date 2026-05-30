@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { CalendarDays, ChevronDown, Clipboard, Clock, Globe2, Plus, Share2, ShieldCheck, Trophy, Users } from 'lucide-react'
 import { PRODE_FRIEND_PREDICTIONS } from '@/data/prodeData'
 import { calculatePredictionPoints, formatMatchTime, formatTimeToClose, getEffectiveMatchStatus, isMatchEditable } from '@/lib/prode'
@@ -15,6 +15,7 @@ interface Props {
   primaryGroup: ProdeGroup | null
   groupRanking: ProdeRankingEntry[]
   groups: ProdeGroup[]
+  canManageResults: boolean
   onSavePredictions: (items: Array<{ matchId: string; homeScore: number; awayScore: number; qualifiedTeamId?: string }>) => void
   onUpdateResult: (matchId: string, patch: Partial<ProdeMatch>) => void
   onCreateGroup: (name: string) => ProdeGroup | null
@@ -42,11 +43,21 @@ const STATUS_LABELS: Record<string, string> = {
   cancelled: 'Cancelado',
 }
 
-function ProdeTabs({ activeTab, onChange }: { activeTab: ProdeSection; onChange: (tab: ProdeSection) => void }) {
+function ProdeTabs({
+  activeTab,
+  canManageResults,
+  onChange,
+}: {
+  activeTab: ProdeSection
+  canManageResults: boolean
+  onChange: (tab: ProdeSection) => void
+}) {
+  const tabs = PRODE_TABS.filter(tab => canManageResults || tab.id !== 'admin')
+
   return (
     <div className="-mx-1 overflow-x-auto border-b border-zinc-100 px-1 pb-1">
       <div className="flex min-w-max items-end gap-1.5 lg:gap-2">
-        {PRODE_TABS.map(tab => {
+        {tabs.map(tab => {
           const isActive = activeTab === tab.id
           return (
             <button
@@ -180,6 +191,7 @@ export function ProdeView({
   primaryGroup,
   groupRanking,
   groups,
+  canManageResults,
   onSavePredictions,
   onUpdateResult,
   onCreateGroup,
@@ -197,6 +209,12 @@ export function ProdeView({
     away: '',
     qualifiedTeamId: '',
   })
+
+  useEffect(() => {
+    if (section === 'admin' && !canManageResults) {
+      setSection('home')
+    }
+  }, [canManageResults, section])
 
   const currentUserRanking = rankingGeneral.find(row => row.userId === userId)
   const currentGroupRanking = groupRanking.find(row => row.userId === userId)
@@ -248,7 +266,7 @@ export function ProdeView({
 
   return (
     <div className="animate-in slide-in-from-right-4 space-y-5 duration-300">
-      <ProdeTabs activeTab={section} onChange={setSection} />
+      <ProdeTabs activeTab={section} canManageResults={canManageResults} onChange={setSection} />
 
       {section === 'home' && (
         <div className="grid gap-4 lg:grid-cols-[1.2fr_.8fr]">
@@ -457,7 +475,7 @@ export function ProdeView({
         </div>
       )}
 
-      {section === 'admin' && (
+      {section === 'admin' && canManageResults && (
         <div className="rounded-3xl border border-zinc-200 bg-white p-5 shadow-sm">
           <div className="flex items-center gap-2">
             <ShieldCheck className="h-5 w-5 text-amber-500" />
