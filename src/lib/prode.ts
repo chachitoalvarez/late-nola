@@ -10,6 +10,7 @@ export function getEffectiveMatchStatus(match: ProdeMatch, now = new Date()): Ma
 }
 
 export function isMatchEditable(match: ProdeMatch, now = new Date()): boolean {
+  if (!match.allowsPrediction) return false
   const status = getEffectiveMatchStatus(match, now)
   return status === 'open' || status === 'closing_soon'
 }
@@ -69,4 +70,3 @@ export function formatTimeToClose(startsAt: string, now = new Date()): string {
   if (hours <= 0) return `Cierra en ${remainingMinutes} min`
   return `Cierra en ${hours}h ${remainingMinutes}m`
 }
-

@@ -25,9 +25,12 @@ function loadState(userId: string): ProdeState {
     const raw = window.localStorage.getItem(`${PROJECT_SLUG}:prode:${userId}`)
     if (!raw) return DEFAULT_STATE
     const parsed = JSON.parse(raw) as ProdeState
+    const savedMatches = parsed.matches?.length === PRODE_MATCHES.length ? parsed.matches : PRODE_MATCHES
     return {
-      matches: parsed.matches?.length ? parsed.matches : PRODE_MATCHES,
-      predictions: parsed.predictions ?? [],
+      matches: mergeFixtureMatches(savedMatches),
+      predictions: (parsed.predictions ?? []).filter(prediction =>
+        PRODE_MATCHES.some(match => match.id === prediction.matchId)
+      ),
       groups: parsed.groups ?? [],
       groupMembers: parsed.groupMembers ?? [],
       auditLogs: parsed.auditLogs ?? [],
@@ -35,6 +38,29 @@ function loadState(userId: string): ProdeState {
   } catch {
     return DEFAULT_STATE
   }
+}
+
+function mergeFixtureMatches(savedMatches: ProdeMatch[]): ProdeMatch[] {
+  const savedByFifaNumber = new Map(savedMatches.map(match => [match.fifaMatchNumber, match]))
+
+  return PRODE_MATCHES.map(match => {
+    const saved = savedByFifaNumber.get(match.fifaMatchNumber)
+    if (!saved) return match
+    return {
+      ...match,
+      status: saved.status ?? match.status,
+      homeScore: saved.homeScore,
+      awayScore: saved.awayScore,
+      penaltyHomeScore: saved.penaltyHomeScore,
+      penaltyAwayScore: saved.penaltyAwayScore,
+      qualifiedTeamId: saved.qualifiedTeamId,
+      resultUpdatedAt: saved.resultUpdatedAt,
+      resultUpdatedBy: saved.resultUpdatedBy,
+      winner: saved.winner,
+      winnerMatchNumber: saved.winnerMatchNumber,
+      loserMatchNumber: saved.loserMatchNumber,
+    }
+  })
 }
 
 function saveState(userId: string, state: ProdeState) {
@@ -82,7 +108,11 @@ export function useProde(userId: string, userName: string) {
   )
 
   const pendingMatches = useMemo(
-    () => state.matches.filter(match => !predictionsByMatch.has(match.id) && ['open', 'closing_soon'].includes(getEffectiveMatchStatus(match))),
+    () => state.matches.filter(match =>
+      match.allowsPrediction &&
+      !predictionsByMatch.has(match.id) &&
+      ['open', 'closing_soon'].includes(getEffectiveMatchStatus(match))
+    ),
     [predictionsByMatch, state.matches],
   )
 
@@ -103,7 +133,7 @@ export function useProde(userId: string, userName: string) {
 
     for (const item of items) {
       const match = state.matches.find(m => m.id === item.matchId)
-      if (!match || !['open', 'closing_soon'].includes(getEffectiveMatchStatus(match))) continue
+      if (!match || !match.allowsPrediction || !['open', 'closing_soon'].includes(getEffectiveMatchStatus(match))) continue
       const scoring = calculatePredictionPoints(match, {
         predictedHomeScore: item.homeScore,
         predictedAwayScore: item.awayScore,
@@ -143,7 +173,10 @@ export function useProde(userId: string, userName: string) {
       resultUpdatedAt: new Date().toISOString(),
       resultUpdatedBy: userName,
     }
-    const matches = state.matches.map(item => item.id === matchId ? updatedMatch : item)
+    const matches = propagateKnockoutResult(
+      state.matches.map(item => item.id === matchId ? updatedMatch : item),
+      updatedMatch,
+    )
     const predictions = state.predictions.map(prediction => {
       if (prediction.matchId !== matchId) return prediction
       const scoring = calculatePredictionPoints(updatedMatch, prediction)
@@ -201,3 +234,87 @@ export function useProde(userId: string, userName: string) {
   }
 }
 
+function getWinnerAndLoser(match: ProdeMatch): { winner: ProdeMatchSide; loser: ProdeMatchSide } | null {
+  if (match.homeScore === undefined || match.awayScore === undefined) return null
+
+  const homeWins = match.homeScore > match.awayScore
+    || (match.homeScore === match.awayScore && (match.penaltyHomeScore ?? -1) > (match.penaltyAwayScore ?? -1))
+  const awayWins = match.awayScore > match.homeScore
+    || (match.homeScore === match.awayScore && (match.penaltyAwayScore ?? -1) > (match.penaltyHomeScore ?? -1))
+
+  if (!homeWins && !awayWins) return null
+
+  const home = toMatchSide(match, 'home')
+  const away = toMatchSide(match, 'away')
+  return homeWins ? { winner: home, loser: away } : { winner: away, loser: home }
+}
+
+interface ProdeMatchSide {
+  teamId: string
+  teamName: string
+  teamFlag: string
+}
+
+function toMatchSide(match: ProdeMatch, side: 'home' | 'away'): ProdeMatchSide {
+  return side === 'home'
+    ? {
+        teamId: match.homeTeamId,
+        teamName: match.homeTeamName,
+        teamFlag: match.homeTeamFlag,
+      }
+    : {
+        teamId: match.awayTeamId,
+        teamName: match.awayTeamName,
+        teamFlag: match.awayTeamFlag,
+      }
+}
+
+function applyResolvedSide(match: ProdeMatch, side: 'home' | 'away', resolved: ProdeMatchSide): ProdeMatch {
+  const next = side === 'home'
+    ? {
+        ...match,
+        homeTeamId: resolved.teamId,
+        homeTeamName: resolved.teamName,
+        homeTeamFlag: resolved.teamFlag,
+      }
+    : {
+        ...match,
+        awayTeamId: resolved.teamId,
+        awayTeamName: resolved.teamName,
+        awayTeamFlag: resolved.teamFlag,
+      }
+
+  const bothResolved = !!next.homeTeamFlag && !!next.awayTeamFlag
+  return {
+    ...next,
+    fixtureNeedsResolution: !bothResolved,
+    resolvedFromResult: bothResolved,
+    allowsPrediction: bothResolved,
+  }
+}
+
+function propagateKnockoutResult(matches: ProdeMatch[], sourceMatch: ProdeMatch): ProdeMatch[] {
+  if (sourceMatch.phase === 'group_stage') return matches
+  const result = getWinnerAndLoser(sourceMatch)
+  if (!result) return matches
+
+  const winnerSlot = `W${sourceMatch.fifaMatchNumber}`
+  const loserSlot = `L${sourceMatch.fifaMatchNumber}`
+
+  return matches.map(match => {
+    let next = match
+    if (match.homeTeamSlot === winnerSlot || match.homeSlotReference === winnerSlot) {
+      next = applyResolvedSide(next, 'home', result.winner)
+    }
+    if (match.awayTeamSlot === winnerSlot || match.awaySlotReference === winnerSlot) {
+      next = applyResolvedSide(next, 'away', result.winner)
+    }
+    if (match.homeTeamSlot === loserSlot || match.homeSlotReference === loserSlot) {
+      next = applyResolvedSide(next, 'home', result.loser)
+    }
+    if (match.awayTeamSlot === loserSlot || match.awaySlotReference === loserSlot) {
+      next = applyResolvedSide(next, 'away', result.loser)
+    }
+    return next
+  })
+}

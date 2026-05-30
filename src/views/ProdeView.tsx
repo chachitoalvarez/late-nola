@@ -171,7 +171,7 @@ function MatchCard({
             ? `${match.homeScore} - ${match.awayScore}`
             : prediction
               ? `${prediction.predictedHomeScore} - ${prediction.predictedAwayScore}`
-              : 'Predecir'}
+              : editable ? 'Predecir' : 'Esperando equipos'}
         </div>
       </div>
       {prediction && officialResult && (

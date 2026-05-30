@@ -19,17 +19,43 @@ export type MatchStatus =
 
 export interface ProdeMatch {
   id: string
+  order: number
+  fifaMatchNumber: number
   homeTeamId: string
   awayTeamId: string
   homeTeamName: string
   awayTeamName: string
   homeTeamFlag: string
   awayTeamFlag: string
+  homeTeamSlot?: string
+  awayTeamSlot?: string
+  homeSlotType?: string
+  awaySlotType?: string
+  homeSlotReference?: string
+  awaySlotReference?: string
   phase: MatchPhase
+  round: string
   groupName?: string
+  groupCode?: string
+  groupMatchday?: number
   matchday: string
   startsAt: string
+  localDate: string
+  localTime: string
+  localTimezone: string
+  argentinaDate: string
+  argentinaTime: string
+  stadium: string
+  city: string
+  hostCountry: string
   status: MatchStatus
+  allowsPrediction: boolean
+  fixtureNeedsResolution: boolean
+  resolvedFromResult: boolean
+  winner?: string
+  winnerMatchNumber?: number
+  loserMatchNumber?: number
+  fixtureUpdateNotes?: string
   homeScore?: number
   awayScore?: number
   penaltyHomeScore?: number
@@ -93,4 +119,3 @@ export interface ResultAuditLog {
   updatedBy: string
   updatedAt: string
 }
-
