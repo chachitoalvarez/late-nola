@@ -66,32 +66,53 @@ const STATUS_LABELS: Partial<Record<MatchStatus, string>> = {
 
 const FIFA_TO_ISO: Record<string, string> = {
   ALG: 'DZ',
+  ARG: 'AR',
+  AUS: 'AU',
   AUT: 'AT',
+  BEL: 'BE',
   BIH: 'BA',
+  BRA: 'BR',
+  CAN: 'CA',
   CIV: 'CI',
   COD: 'CD',
+  COL: 'CO',
   CPV: 'CV',
   CRO: 'HR',
   CUW: 'CW',
   CZE: 'CZ',
   ECU: 'EC',
+  EGY: 'EG',
   ENG: 'GB',
   ESP: 'ES',
+  FRA: 'FR',
   GER: 'DE',
+  GHA: 'GH',
+  HAI: 'HT',
+  IRN: 'IR',
+  IRQ: 'IQ',
+  JOR: 'JO',
+  JPN: 'JP',
   KOR: 'KR',
   KSA: 'SA',
   MAR: 'MA',
+  MEX: 'MX',
   NED: 'NL',
   NOR: 'NO',
   NZL: 'NZ',
+  PAN: 'PA',
   PAR: 'PY',
   POR: 'PT',
+  QAT: 'QA',
   RSA: 'ZA',
   SCO: 'GB',
+  SEN: 'SN',
   SUI: 'CH',
   SWE: 'SE',
+  TUN: 'TN',
   TUR: 'TR',
   URU: 'UY',
+  USA: 'US',
+  UZB: 'UZ',
 }
 
 function ProdeTabs({
@@ -167,15 +188,13 @@ function ScoreInput({
         onChange(next)
         if (next !== '') onComplete?.()
       }}
-      className="h-11 w-12 shrink-0 rounded-xl border border-zinc-200 bg-white text-center text-base font-black text-zinc-900 outline-none transition focus:border-amber-500 focus:ring-4 focus:ring-amber-500/20 disabled:bg-zinc-100 disabled:text-zinc-400"
+      className="h-10 w-10 shrink-0 rounded-xl border border-zinc-200 bg-white text-center text-base font-black text-zinc-900 outline-none transition focus:border-amber-500 focus:ring-4 focus:ring-amber-500/20 disabled:bg-zinc-100 disabled:text-zinc-400 md:h-11 md:w-12"
     />
   )
 }
 
 function countryFlag(code: string): string {
   if (!code) return ''
-  if (code === 'ENG') return '🏴'
-  if (code === 'SCO') return '🏴'
   const iso = FIFA_TO_ISO[code] ?? code
   if (!/^[A-Z]{2}$/.test(iso)) return ''
   return [...iso].map(char => String.fromCodePoint(127397 + char.charCodeAt(0))).join('')
@@ -211,10 +230,20 @@ function predictionStatusLabel(match: ProdeMatch, prediction?: ProdePrediction):
 
 function TeamName({ name, flag, align = 'left' }: { name: string; flag: string; align?: 'left' | 'right' }) {
   return (
-    <div className={`flex min-w-0 items-center gap-2 ${align === 'right' ? 'justify-end text-right' : ''}`}>
-      {align === 'left' && <span className="text-xl leading-none">{flag || '•'}</span>}
-      <span className="min-w-0 text-sm font-black leading-tight text-zinc-900 [overflow-wrap:anywhere] md:text-base">{name}</span>
-      {align === 'right' && <span className="text-xl leading-none">{flag || '•'}</span>}
+    <div className={`flex min-w-0 items-center gap-1.5 ${align === 'right' ? 'justify-end text-right' : ''}`}>
+      {align === 'left' && (
+        <span className="flex h-6 w-6 shrink-0 items-center justify-center text-[1.25rem] leading-none" aria-hidden="true">
+          {flag}
+        </span>
+      )}
+      <span className="min-w-0 overflow-hidden text-[0.8rem] font-black leading-[1.12] text-zinc-900 [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2] [overflow-wrap:normal] [text-wrap:balance] md:text-sm">
+        {name}
+      </span>
+      {align === 'right' && (
+        <span className="flex h-6 w-6 shrink-0 items-center justify-center text-[1.25rem] leading-none" aria-hidden="true">
+          {flag}
+        </span>
+      )}
     </div>
   )
 }
@@ -254,33 +283,35 @@ function MatchPredictionCard({
 
   return (
     <article className="rounded-2xl border border-zinc-200 bg-white p-3 shadow-sm transition hover:border-amber-200 md:p-4">
-      <div className="mb-3 flex items-center justify-between gap-3">
+      <div className="mb-2.5 flex items-center justify-between gap-3">
         <p className="truncate text-xs font-black uppercase tracking-wider text-zinc-500">{matchRoundLabel(match)}</p>
         <p className="shrink-0 text-xs font-black text-zinc-500">{formatMatchHour(match)}</p>
       </div>
 
-      <div className="grid grid-cols-[minmax(0,1fr)_auto_auto_auto_minmax(0,1fr)] items-center gap-2">
+      <div className="grid grid-cols-[minmax(0,1fr)_7rem_minmax(0,1fr)] items-center gap-2 md:grid-cols-[minmax(0,1fr)_8rem_minmax(0,1fr)]">
         <TeamName name={match.homeTeamName} flag={countryFlag(match.homeTeamFlag)} />
-        <ScoreInput
-          ariaLabel={`Goles de ${match.homeTeamName}`}
-          value={officialResult ? match.homeScore ?? '' : value.home}
-          disabled={!editable}
-          inputRef={homeInputRef}
-          onComplete={() => awayInputRef.current?.focus()}
-          onChange={home => updateDraft('home', home)}
-        />
-        <span className="text-xs font-black uppercase text-zinc-400">vs</span>
-        <ScoreInput
-          ariaLabel={`Goles de ${match.awayTeamName}`}
-          value={officialResult ? match.awayScore ?? '' : value.away}
-          disabled={!editable}
-          inputRef={awayInputRef}
-          onChange={away => updateDraft('away', away)}
-        />
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-1">
+          <ScoreInput
+            ariaLabel={`Goles de ${match.homeTeamName}`}
+            value={officialResult ? match.homeScore ?? '' : value.home}
+            disabled={!editable}
+            inputRef={homeInputRef}
+            onComplete={() => awayInputRef.current?.focus()}
+            onChange={home => updateDraft('home', home)}
+          />
+          <span className="text-[0.65rem] font-black uppercase text-zinc-400">vs</span>
+          <ScoreInput
+            ariaLabel={`Goles de ${match.awayTeamName}`}
+            value={officialResult ? match.awayScore ?? '' : value.away}
+            disabled={!editable}
+            inputRef={awayInputRef}
+            onChange={away => updateDraft('away', away)}
+          />
+        </div>
         <TeamName name={match.awayTeamName} flag={countryFlag(match.awayTeamFlag)} align="right" />
       </div>
 
-      <div className="mt-3 flex min-h-5 items-center justify-between gap-3">
+      <div className="mt-2.5 flex min-h-5 items-center justify-between gap-3">
         <p className={`text-xs font-black ${label === 'Guardado' ? 'text-emerald-600' : isFinished ? 'text-amber-600' : editable ? 'text-zinc-500' : 'text-zinc-500'}`}>
           {label}
           {isFinished && prediction ? ` · ${prediction.points} pts` : ''}
@@ -493,7 +524,7 @@ export function ProdeView({
             </div>
           ) : groupedMatches.map(group => (
             <section key={group.title} className="space-y-2">
-              <h3 className="px-1 text-sm font-black capitalize text-zinc-500">{group.title}</h3>
+              <h3 className="px-1 text-sm font-black text-zinc-500">{group.title}</h3>
               <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
                 {group.matches.map(match => (
                   <MatchPredictionCard
