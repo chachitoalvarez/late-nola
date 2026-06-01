@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type RefObject } from 'react'
+import { useEffect, useMemo, useRef, useState, type Ref } from 'react'
 import { Check, ChevronDown, Clipboard, Globe2, Pencil, Plus, Share2, ShieldCheck, Users } from 'lucide-react'
 import { getEffectiveMatchStatus, isMatchEditable } from '@/lib/prode'
 import type { MatchStatus, ProdeGroup, ProdeMatch, ProdePrediction, ProdeRankingEntry } from '@/types/prode'
@@ -24,6 +24,7 @@ type ProdeSection = 'matches' | 'ranking' | 'grupos' | 'admin'
 type PredictionFilter = 'pending' | 'predicted' | 'all'
 type MatchPhaseFilter = 'all' | 'group_stage' | 'round_of_32' | 'round_of_16' | 'quarter_final' | 'semi_final' | 'final'
 type MatchFixtureFilter = MatchPhaseFilter | `group_${string}`
+type ScoreDraft = { home: number | ''; away: number | '' }
 
 const PRODE_TABS: Array<{ id: ProdeSection; label: string }> = [
   { id: 'matches', label: 'Partidos' },
@@ -165,18 +166,21 @@ function ScoreInput({
   inputRef,
   onComplete,
   ariaLabel,
+  dataInputId,
 }: {
   value: number | ''
   onChange: (value: number | '') => void
   disabled?: boolean
-  inputRef?: RefObject<HTMLInputElement | null>
+  inputRef?: Ref<HTMLInputElement>
   onComplete?: () => void
   ariaLabel: string
+  dataInputId?: string
 }) {
   return (
     <input
       ref={inputRef}
       aria-label={ariaLabel}
+      data-prode-home-input={dataInputId}
       value={value}
       disabled={disabled}
       inputMode="numeric"
@@ -254,14 +258,21 @@ function MatchPredictionCard({
   draft,
   setDraft,
   onSave,
+  isPendingCompletion = false,
+  isLeavingPending = false,
+  cardRef,
+  homeInputRef,
 }: {
   match: ProdeMatch
   prediction?: ProdePrediction
-  draft?: { home: number | ''; away: number | '' }
-  setDraft: (draft: { home: number | ''; away: number | '' }) => void
-  onSave: (match: ProdeMatch, draft: { home: number | ''; away: number | '' }, wasEditing: boolean) => void
+  draft?: ScoreDraft
+  setDraft: (draft: ScoreDraft) => void
+  onSave: (match: ProdeMatch, draft: ScoreDraft, wasEditing: boolean) => void
+  isPendingCompletion?: boolean
+  isLeavingPending?: boolean
+  cardRef?: Ref<HTMLElement>
+  homeInputRef?: Ref<HTMLInputElement>
 }) {
-  const homeInputRef = useRef<HTMLInputElement>(null)
   const awayInputRef = useRef<HTMLInputElement>(null)
   const editable = isMatchEditable(match)
   const officialResult = match.homeScore !== undefined && match.awayScore !== undefined
@@ -269,7 +280,7 @@ function MatchPredictionCard({
     home: prediction?.predictedHomeScore ?? '',
     away: prediction?.predictedAwayScore ?? '',
   }
-  const label = predictionStatusLabel(match, prediction)
+  const label = isPendingCompletion ? 'Guardado' : predictionStatusLabel(match, prediction)
   const status = getEffectiveMatchStatus(match)
   const isFinished = status === 'finished' || status === 'points_calculated'
 
@@ -282,7 +293,12 @@ function MatchPredictionCard({
   }
 
   return (
-    <article className="rounded-2xl border border-zinc-200 bg-white p-3 shadow-sm transition hover:border-amber-200 md:p-4">
+    <article
+      ref={cardRef}
+      className={`scroll-mt-24 rounded-2xl border bg-white p-3 shadow-sm transition-all duration-300 md:p-4 ${
+        isPendingCompletion ? 'border-emerald-200 bg-emerald-50/30' : 'border-zinc-200 hover:border-amber-200'
+      } ${isLeavingPending ? 'scale-[0.98] opacity-0' : 'scale-100 opacity-100'}`}
+    >
       <div className="mb-2.5 flex items-center justify-between gap-3">
         <p className="truncate text-xs font-black uppercase tracking-wider text-zinc-500">{matchRoundLabel(match)}</p>
         <p className="shrink-0 text-xs font-black text-zinc-500">{formatMatchHour(match)}</p>
@@ -296,6 +312,7 @@ function MatchPredictionCard({
             value={officialResult ? match.homeScore ?? '' : value.home}
             disabled={!editable}
             inputRef={homeInputRef}
+            dataInputId={match.id}
             onComplete={() => awayInputRef.current?.focus()}
             onChange={home => updateDraft('home', home)}
           />
@@ -313,14 +330,20 @@ function MatchPredictionCard({
 
       <div className="mt-2.5 flex min-h-5 items-center justify-between gap-3">
         <p className={`text-xs font-black ${label === 'Guardado' ? 'text-emerald-600' : isFinished ? 'text-amber-600' : editable ? 'text-zinc-500' : 'text-zinc-500'}`}>
-          {label}
+          <span className="inline-flex items-center gap-1">
+            {label === 'Guardado' && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
+            {label}
+          </span>
           {isFinished && prediction ? ` · ${prediction.points} pts` : ''}
         </p>
         {prediction && editable && !officialResult && (
           <button
             type="button"
             aria-label="Editar predicción"
-            onClick={() => homeInputRef.current?.focus()}
+            onClick={() => {
+              const input = document.querySelector<HTMLInputElement>(`[data-prode-home-input="${match.id}"]`)
+              input?.focus()
+            }}
             className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-50 text-amber-600 transition hover:bg-amber-100"
           >
             <Pencil className="h-4 w-4" strokeWidth={2.5} />
@@ -374,10 +397,15 @@ export function ProdeView({
   const [predictionFilter, setPredictionFilter] = useState<PredictionFilter>('pending')
   const [phaseFilter, setPhaseFilter] = useState<MatchFixtureFilter>('all')
   const [feedbackMessage, setFeedbackMessage] = useState('')
-  const [drafts, setDrafts] = useState<Record<string, { home: number | ''; away: number | '' }>>({})
+  const [drafts, setDrafts] = useState<Record<string, ScoreDraft>>({})
+  const [recentlyCompleted, setRecentlyCompleted] = useState<Record<string, boolean>>({})
+  const [leavingPending, setLeavingPending] = useState<Record<string, boolean>>({})
   const [groupName, setGroupName] = useState('')
   const [rankingGroupFilter, setRankingGroupFilter] = useState('all')
   const [lastCreatedGroup, setLastCreatedGroup] = useState<ProdeGroup | null>(null)
+  const cardRefs = useRef<Record<string, HTMLElement | null>>({})
+  const homeInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
+  const removeTimers = useRef<Record<string, number[]>>({})
   const [adminDraft, setAdminDraft] = useState<{ matchId: string; home: number | ''; away: number | ''; qualifiedTeamId: string }>({
     matchId: matches[0]?.id ?? '',
     home: '',
@@ -397,6 +425,12 @@ export function ProdeView({
     return () => window.clearTimeout(timeout)
   }, [feedbackMessage])
 
+  useEffect(() => {
+    return () => {
+      Object.values(removeTimers.current).flat().forEach(timer => window.clearTimeout(timer))
+    }
+  }, [])
+
   const currentUserRanking = rankingGeneral.find(row => row.userId === userId)
   const currentGroupRanking = groupRanking.find(row => row.userId === userId)
   const selectedRankingGroup = groups.find(group => group.id === rankingGroupFilter) ?? null
@@ -411,19 +445,21 @@ export function ProdeView({
   }, [matches, phaseFilter])
 
   const filterCounts = useMemo(() => {
-    const pending = phaseMatches.filter(match => isMatchEditable(match) && !predictionsByMatch.has(match.id)).length
+    const pending = phaseMatches.filter(match =>
+      isMatchEditable(match) && (!predictionsByMatch.has(match.id) || recentlyCompleted[match.id])
+    ).length
     const predicted = phaseMatches.filter(match => predictionsByMatch.has(match.id)).length
     return { pending, predicted, all: phaseMatches.length }
-  }, [phaseMatches, predictionsByMatch])
+  }, [phaseMatches, predictionsByMatch, recentlyCompleted])
 
   const filteredMatches = useMemo(() => {
     return phaseMatches.filter(match => {
       const hasPrediction = predictionsByMatch.has(match.id)
-      if (predictionFilter === 'pending') return isMatchEditable(match) && !hasPrediction
+      if (predictionFilter === 'pending') return isMatchEditable(match) && (!hasPrediction || recentlyCompleted[match.id])
       if (predictionFilter === 'predicted') return hasPrediction
       return true
     })
-  }, [phaseMatches, predictionFilter, predictionsByMatch])
+  }, [phaseMatches, predictionFilter, predictionsByMatch, recentlyCompleted])
 
   const groupedMatches = useMemo(() => {
     const groupsByDate = new Map<string, { title: string; matches: ProdeMatch[] }>()
@@ -436,12 +472,61 @@ export function ProdeView({
     return [...groupsByDate.values()]
   }, [filteredMatches])
 
-  const saveInlinePrediction = (match: ProdeMatch, draft: { home: number | ''; away: number | '' }, wasEditing: boolean) => {
+  const focusNextPendingMatch = (savedMatch: ProdeMatch) => {
+    const savedIndex = filteredMatches.findIndex(item => item.id === savedMatch.id)
+    const nextMatch = filteredMatches.slice(savedIndex + 1).find(item =>
+      isMatchEditable(item) && !predictionsByMatch.has(item.id) && item.id !== savedMatch.id
+    )
+    if (!nextMatch) return
+
+    window.setTimeout(() => {
+      cardRefs.current[nextMatch.id]?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      window.setTimeout(() => homeInputRefs.current[nextMatch.id]?.focus({ preventScroll: true }), 350)
+    }, 180)
+  }
+
+  const schedulePendingRemoval = (matchId: string) => {
+    removeTimers.current[matchId]?.forEach(timer => window.clearTimeout(timer))
+    const fadeTimer = window.setTimeout(() => {
+      setLeavingPending(prev => ({ ...prev, [matchId]: true }))
+    }, 2400)
+    const removeTimer = window.setTimeout(() => {
+      setRecentlyCompleted(prev => {
+        const next = { ...prev }
+        delete next[matchId]
+        return next
+      })
+      setLeavingPending(prev => {
+        const next = { ...prev }
+        delete next[matchId]
+        return next
+      })
+      setDrafts(prev => {
+        const next = { ...prev }
+        delete next[matchId]
+        return next
+      })
+      delete removeTimers.current[matchId]
+    }, 2850)
+    removeTimers.current[matchId] = [fadeTimer, removeTimer]
+  }
+
+  const saveInlinePrediction = (match: ProdeMatch, draft: ScoreDraft, wasEditing: boolean) => {
     if (draft.home === '' || draft.away === '') return
     const savedCount = onSavePredictions([{ matchId: match.id, homeScore: draft.home, awayScore: draft.away }])
     if (savedCount <= 0) {
       setFeedbackMessage('No pudimos guardar la predicción. Intentá de nuevo.')
       return
+    }
+    if (predictionFilter === 'pending') {
+      setRecentlyCompleted(prev => ({ ...prev, [match.id]: true }))
+      setLeavingPending(prev => {
+        const next = { ...prev }
+        delete next[match.id]
+        return next
+      })
+      focusNextPendingMatch(match)
+      schedulePendingRemoval(match.id)
     }
     setFeedbackMessage(wasEditing ? 'Predicción actualizada' : 'Predicción guardada')
   }
@@ -455,7 +540,7 @@ export function ProdeView({
 
   const predictionFilters: Array<{ id: PredictionFilter; label: string; count: number }> = [
     { id: 'pending', label: 'Pendientes', count: filterCounts.pending },
-    { id: 'predicted', label: 'Predichos', count: filterCounts.predicted },
+    { id: 'predicted', label: 'Completados', count: filterCounts.predicted },
     { id: 'all', label: 'Todos', count: filterCounts.all },
   ]
 
@@ -519,8 +604,12 @@ export function ProdeView({
 
           {groupedMatches.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-zinc-200 bg-white p-6 text-center">
-              <p className="text-sm font-black text-zinc-800">No hay partidos para este filtro.</p>
-              <p className="mt-1 text-sm font-semibold text-zinc-500">Probá con Predichos o Todos.</p>
+              <p className="text-sm font-black text-zinc-800">
+                {predictionFilter === 'pending' ? 'No tenés predicciones pendientes' : 'No hay partidos para este filtro.'}
+              </p>
+              <p className="mt-1 text-sm font-semibold text-zinc-500">
+                {predictionFilter === 'pending' ? 'Ya completaste todos los partidos disponibles.' : 'Probá con Completados o Todos.'}
+              </p>
             </div>
           ) : groupedMatches.map(group => (
             <section key={group.title} className="space-y-2">
@@ -534,6 +623,14 @@ export function ProdeView({
                     draft={drafts[match.id]}
                     setDraft={draft => setDrafts(prev => ({ ...prev, [match.id]: draft }))}
                     onSave={saveInlinePrediction}
+                    isPendingCompletion={predictionFilter === 'pending' && !!recentlyCompleted[match.id]}
+                    isLeavingPending={predictionFilter === 'pending' && !!leavingPending[match.id]}
+                    cardRef={node => {
+                      cardRefs.current[match.id] = node
+                    }}
+                    homeInputRef={node => {
+                      homeInputRefs.current[match.id] = node
+                    }}
                   />
                 ))}
               </div>
