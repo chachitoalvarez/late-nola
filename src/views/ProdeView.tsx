@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
-import { CalendarDays, ChevronDown, Clipboard, Clock, Globe2, Plus, Share2, ShieldCheck, Trophy, Users } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState, type RefObject } from 'react'
+import { CalendarDays, Check, ChevronDown, Clipboard, Globe2, Pencil, Plus, Share2, ShieldCheck, Trophy, Users, X } from 'lucide-react'
 import { PRODE_FRIEND_PREDICTIONS } from '@/data/prodeData'
-import { calculatePredictionPoints, formatMatchTime, formatTimeToClose, getEffectiveMatchStatus, isMatchEditable } from '@/lib/prode'
+import { calculatePredictionPoints, formatMatchTime, getEffectiveMatchStatus, isMatchEditable } from '@/lib/prode'
 import type { ProdeGroup, ProdeMatch, ProdePrediction, ProdeRankingEntry } from '@/types/prode'
 
 interface Props {
@@ -35,19 +35,19 @@ const PRODE_TABS: Array<{ id: ProdeSection; label: string }> = [
 ]
 
 const STATUS_LABELS: Record<string, string> = {
-  open: 'Abierto',
-  closing_soon: 'Cierra pronto',
-  locked: 'Cerrado',
-  live: 'En vivo',
+  open: '',
+  closing_soon: '',
+  locked: 'Predicción cerrada',
+  live: 'En juego',
   finished: 'Finalizado',
-  points_calculated: 'Puntos calculados',
+  points_calculated: 'Finalizado',
   postponed: 'Postergado',
   cancelled: 'Cancelado',
 }
 
 const FIXTURE_STATUS_FILTERS: Array<{ id: MatchStatusFilter; label: string }> = [
   { id: 'all', label: 'Todos' },
-  { id: 'upcoming', label: 'Proximos' },
+  { id: 'upcoming', label: 'Próximos' },
   { id: 'finished', label: 'Finalizados' },
 ]
 
@@ -115,9 +115,16 @@ function scoreValue(value: string): number | null {
   return Number.isInteger(numeric) && numeric >= 0 ? numeric : null
 }
 
-function MatchScoreInput({ value, onChange, disabled }: { value: number | ''; onChange: (value: number | '') => void; disabled?: boolean }) {
+function MatchScoreInput({ value, onChange, disabled, inputRef, onComplete }: {
+  value: number | ''
+  onChange: (value: number | '') => void
+  disabled?: boolean
+  inputRef?: RefObject<HTMLInputElement | null>
+  onComplete?: () => void
+}) {
   return (
     <input
+      ref={inputRef}
       value={value}
       disabled={disabled}
       inputMode="numeric"
@@ -125,10 +132,25 @@ function MatchScoreInput({ value, onChange, disabled }: { value: number | ''; on
       onChange={event => {
         const next = scoreValue(event.target.value)
         onChange(next ?? '')
+        if (next !== null) onComplete?.()
       }}
       className="h-10 w-12 rounded-xl border border-zinc-200 bg-white text-center text-base font-black text-zinc-900 outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-500/20 disabled:bg-zinc-100 disabled:text-zinc-400"
     />
   )
+}
+
+function getMatchTimeLabel(match: ProdeMatch, now = new Date()): string {
+  const status = getEffectiveMatchStatus(match, now)
+  if (status === 'live') return 'En juego'
+  if (status === 'finished' || status === 'points_calculated') return 'Finalizado'
+  if (status === 'locked') return 'Predicción cerrada'
+  if (status === 'postponed' || status === 'cancelled') return STATUS_LABELS[status]
+
+  const diffMinutes = Math.floor((new Date(match.startsAt).getTime() - now.getTime()) / 60000)
+  if (diffMinutes <= 0) return 'Predicción cerrada'
+  if (diffMinutes < 60) return `Cierra en ${diffMinutes} min`
+  if (diffMinutes < 24 * 60) return `Cierra en ${Math.ceil(diffMinutes / 60)} h`
+  return formatMatchTime(match.startsAt)
 }
 
 function RankingRows({ rows }: { rows: ProdeRankingEntry[] }) {
@@ -170,6 +192,8 @@ function MatchCard({
   const status = getEffectiveMatchStatus(match)
   const editable = isMatchEditable(match)
   const officialResult = match.homeScore !== undefined && match.awayScore !== undefined
+  const timeLabel = getMatchTimeLabel(match)
+  const canEditPrediction = editable && !officialResult
   return (
     <button
       type="button"
@@ -183,24 +207,22 @@ function MatchCard({
             {match.homeTeamName} vs {match.awayTeamName}
           </h3>
         </div>
-        <span className={`rounded-full px-2.5 py-1 text-xs font-black ${status === 'closing_soon' ? 'bg-red-50 text-red-600' : editable ? 'bg-amber-50 text-amber-700' : 'bg-zinc-100 text-zinc-500'}`}>
+        <span className="sr-only">
           {STATUS_LABELS[status]}
         </span>
       </div>
       <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-zinc-500">
-        <Clock className="h-4 w-4" />
-        <span>{formatMatchTime(match.startsAt)}</span>
-        {editable && <span className="text-amber-600">{formatTimeToClose(match.startsAt)}</span>}
+        <span>{timeLabel}</span>
       </div>
       <div className="flex items-center justify-between rounded-2xl bg-zinc-50 px-3 py-2">
         <div className="text-xs font-bold text-zinc-500">
-          {officialResult ? 'Resultado oficial' : prediction ? 'Tu predicción' : 'Sin predicción'}
+          {officialResult ? 'Resultado oficial' : prediction ? `Tu predicción: ${prediction.predictedHomeScore} - ${prediction.predictedAwayScore}` : 'Sin predicción'}
         </div>
         <div className="text-sm font-black text-zinc-900">
           {officialResult
             ? `${match.homeScore} - ${match.awayScore}`
             : prediction
-              ? `${prediction.predictedHomeScore} - ${prediction.predictedAwayScore}`
+              ? canEditPrediction && <span aria-label="Editar predicción"><Pencil className="h-4 w-4 text-amber-600" strokeWidth={2.5} /></span>
               : editable ? 'Predecir' : 'Esperando equipos'}
         </div>
       </div>
@@ -230,6 +252,8 @@ export function ProdeView({
   const [statusFilter, setStatusFilter] = useState<MatchStatusFilter>('all')
   const [phaseFilter, setPhaseFilter] = useState<MatchFixtureFilter>('all')
   const [selectedMatch, setSelectedMatch] = useState<ProdeMatch | null>(null)
+  const [modalDraft, setModalDraft] = useState<{ home: number | ''; away: number | '' }>({ home: '', away: '' })
+  const [feedbackMessage, setFeedbackMessage] = useState('')
   const [drafts, setDrafts] = useState<Record<string, { home: number | ''; away: number | '' }>>({})
   const [groupName, setGroupName] = useState('')
   const [rankingGroupFilter, setRankingGroupFilter] = useState('all')
@@ -240,6 +264,8 @@ export function ProdeView({
     away: '',
     qualifiedTeamId: '',
   })
+  const modalHomeInputRef = useRef<HTMLInputElement>(null)
+  const modalAwayInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (section === 'admin' && !canManageResults) {
@@ -294,9 +320,47 @@ export function ProdeView({
   const selectedScoring = selectedMatch && selectedPrediction ? calculatePredictionPoints(selectedMatch, selectedPrediction) : null
   const selectedStatus = selectedMatch ? getEffectiveMatchStatus(selectedMatch) : null
   const revealFriends = selectedStatus ? !['open', 'closing_soon'].includes(selectedStatus) : false
+  const selectedMatchEditable = selectedMatch ? isMatchEditable(selectedMatch) : false
+  const selectedHasPrediction = !!selectedPrediction
+  const modalHasScores = modalDraft.home !== '' && modalDraft.away !== ''
+  const modalChanged = selectedPrediction
+    ? modalDraft.home !== selectedPrediction.predictedHomeScore || modalDraft.away !== selectedPrediction.predictedAwayScore
+    : modalHasScores
+  const canSaveModalPrediction = !!selectedMatch && selectedMatchEditable && modalHasScores && modalChanged
+
+  useEffect(() => {
+    if (!selectedMatch) return
+    const prediction = predictionsByMatch.get(selectedMatch.id)
+    setModalDraft({
+      home: prediction?.predictedHomeScore ?? '',
+      away: prediction?.predictedAwayScore ?? '',
+    })
+    requestAnimationFrame(() => modalHomeInputRef.current?.focus())
+  }, [predictionsByMatch, selectedMatch])
+
+  useEffect(() => {
+    if (!feedbackMessage) return
+    const timeout = window.setTimeout(() => setFeedbackMessage(''), 2200)
+    return () => window.clearTimeout(timeout)
+  }, [feedbackMessage])
+
+  const saveModalPrediction = () => {
+    if (!selectedMatch || modalDraft.home === '' || modalDraft.away === '' || !canSaveModalPrediction) return
+    const wasEditing = !!selectedPrediction
+    onSavePredictions([{ matchId: selectedMatch.id, homeScore: modalDraft.home, awayScore: modalDraft.away }])
+    setSelectedMatch(null)
+    setFeedbackMessage(wasEditing ? 'Predicción actualizada' : 'Predicción guardada')
+  }
 
   return (
     <div className="animate-in slide-in-from-right-4 space-y-5 duration-300">
+      {feedbackMessage && (
+        <div className="fixed left-1/2 top-4 z-[70] flex -translate-x-1/2 items-center gap-2 rounded-2xl border border-emerald-200 bg-white px-4 py-2 text-sm font-bold text-emerald-700 shadow-lg">
+          <Check className="h-4 w-4" strokeWidth={2.5} />
+          {feedbackMessage}
+        </div>
+      )}
+
       <ProdeTabs activeTab={section} canManageResults={canManageResults} onChange={setSection} />
 
       {section === 'home' && (
@@ -337,7 +401,7 @@ export function ProdeView({
                   <div key={match.id} className="grid grid-cols-[1fr_auto] items-center gap-3 rounded-2xl bg-zinc-50 p-3">
                     <div className="min-w-0">
                       <p className="truncate text-sm font-black text-zinc-900">{match.homeTeamName} vs {match.awayTeamName}</p>
-                      <p className="text-xs font-semibold text-zinc-500">{formatTimeToClose(match.startsAt)}</p>
+                      <p className="text-xs font-semibold text-zinc-500">{getMatchTimeLabel(match)}</p>
                     </div>
                     <div className="flex items-center gap-2">
                       <MatchScoreInput value={drafts[match.id]?.home ?? ''} onChange={home => setDrafts(prev => ({ ...prev, [match.id]: { home, away: prev[match.id]?.away ?? '' } }))} />
@@ -386,7 +450,7 @@ export function ProdeView({
 
       {section === 'fixture' && (
         <div className="space-y-4">
-          <div className="flex flex-col gap-3 rounded-3xl border border-zinc-200/60 bg-white p-3 shadow-sm md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div className="flex flex-wrap gap-2">
               {FIXTURE_STATUS_FILTERS.map(item => (
                 <button
@@ -566,40 +630,49 @@ export function ProdeView({
               <div>
                 <p className="text-xs font-black uppercase tracking-wider text-amber-600">{selectedMatch.matchday}</p>
                 <h3 className="mt-1 text-2xl font-black text-zinc-900">{selectedMatch.homeTeamName} vs {selectedMatch.awayTeamName}</h3>
-                <p className="mt-1 text-sm font-semibold text-zinc-500">{formatMatchTime(selectedMatch.startsAt)} · {STATUS_LABELS[getEffectiveMatchStatus(selectedMatch)]}</p>
+                <p className="mt-1 text-sm font-semibold text-zinc-500">{getMatchTimeLabel(selectedMatch)}</p>
               </div>
-              <button onClick={() => setSelectedMatch(null)} className="rounded-full bg-zinc-100 px-3 py-2 text-sm font-black text-zinc-600">Cerrar</button>
+              <button
+                onClick={() => setSelectedMatch(null)}
+                aria-label="Cerrar"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-zinc-500 transition hover:bg-zinc-200 hover:text-zinc-900"
+              >
+                <X className="h-4 w-4" strokeWidth={2.5} />
+              </button>
             </div>
 
-            <div className="mt-5 rounded-3xl bg-zinc-50 p-4">
+            <div className="mt-5 rounded-2xl bg-zinc-50 p-4">
               <p className="text-sm font-black text-zinc-900">Tu predicción</p>
-              {selectedPrediction ? (
-                <p className="mt-2 text-2xl font-black text-zinc-900">{selectedPrediction.predictedHomeScore} - {selectedPrediction.predictedAwayScore}</p>
-              ) : (
+              {!selectedPrediction && (
                 <p className="mt-2 text-sm font-semibold text-zinc-500">Todavía no cargaste predicción para este partido.</p>
               )}
-              {isMatchEditable(selectedMatch) ? (
-                <div className="mt-4 flex items-center gap-2">
-                  <MatchScoreInput value={drafts[selectedMatch.id]?.home ?? selectedPrediction?.predictedHomeScore ?? ''} onChange={home => setDrafts(prev => ({ ...prev, [selectedMatch.id]: { home, away: prev[selectedMatch.id]?.away ?? selectedPrediction?.predictedAwayScore ?? '' } }))} />
-                  <span className="font-black text-zinc-400">-</span>
-                  <MatchScoreInput value={drafts[selectedMatch.id]?.away ?? selectedPrediction?.predictedAwayScore ?? ''} onChange={away => setDrafts(prev => ({ ...prev, [selectedMatch.id]: { home: prev[selectedMatch.id]?.home ?? selectedPrediction?.predictedHomeScore ?? '', away } }))} />
-                  <button
-                    onClick={() => {
-                      const draft = drafts[selectedMatch.id]
-                      if (!draft || draft.home === '' || draft.away === '') return
-                      onSavePredictions([{ matchId: selectedMatch.id, homeScore: draft.home, awayScore: draft.away }])
-                      setDrafts(prev => ({ ...prev, [selectedMatch.id]: { home: '', away: '' } }))
-                    }}
-                    className="ml-auto rounded-2xl bg-amber-500 px-4 py-2 text-sm font-black text-white"
-                  >
-                    Guardar
-                  </button>
-                </div>
-              ) : (
-                <p className="mt-2 text-sm font-bold text-zinc-500">Ya no se puede editar.</p>
+              <div className="mt-4 flex flex-wrap items-center gap-2">
+                <MatchScoreInput
+                  value={modalDraft.home}
+                  disabled={!selectedMatchEditable}
+                  inputRef={modalHomeInputRef}
+                  onComplete={() => modalAwayInputRef.current?.focus()}
+                  onChange={home => setModalDraft(prev => ({ ...prev, home }))}
+                />
+                <span className="font-black text-zinc-400">-</span>
+                <MatchScoreInput
+                  value={modalDraft.away}
+                  disabled={!selectedMatchEditable}
+                  inputRef={modalAwayInputRef}
+                  onChange={away => setModalDraft(prev => ({ ...prev, away }))}
+                />
+                <button
+                  onClick={saveModalPrediction}
+                  disabled={!canSaveModalPrediction}
+                  className="ml-auto rounded-2xl bg-amber-500 px-4 py-2 text-sm font-black text-white transition disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  {selectedHasPrediction ? 'Guardar cambios' : 'Guardar predicción'}
+                </button>
+              </div>
+              {!selectedMatchEditable && (
+                <p className="mt-3 text-sm font-bold text-zinc-500">Predicción cerrada</p>
               )}
             </div>
-
             {selectedMatch.homeScore !== undefined && selectedMatch.awayScore !== undefined && (
               <div className="mt-4 rounded-3xl bg-amber-50 p-4">
                 <p className="text-sm font-black text-zinc-900">Resultado oficial: {selectedMatch.homeScore} - {selectedMatch.awayScore}</p>
@@ -609,9 +682,13 @@ export function ProdeView({
 
             <div className="mt-5">
               <h4 className="text-sm font-black uppercase tracking-wider text-zinc-500">Predicciones de amigos</h4>
-              {!revealFriends ? (
+              {groups.length === 0 ? (
+                <p className="mt-2 text-sm font-semibold text-zinc-500">
+                  Sumate a un grupo para ver predicciones de amigos.
+                </p>
+              ) : !revealFriends ? (
                 <p className="mt-2 rounded-2xl bg-zinc-50 p-4 text-sm font-semibold text-zinc-600">
-                  Tus amigos ya cargaron sus predicciones. Se revelan cuando cierre el partido.
+                  Se revelan cuando cierre el partido.
                 </p>
               ) : (
                 <div className="mt-2 overflow-hidden rounded-2xl border border-zinc-200">
