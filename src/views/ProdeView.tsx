@@ -16,7 +16,7 @@ interface Props {
   groupRanking: ProdeRankingEntry[]
   groups: ProdeGroup[]
   canManageResults: boolean
-  onSavePredictions: (items: Array<{ matchId: string; homeScore: number; awayScore: number; qualifiedTeamId?: string }>) => void
+  onSavePredictions: (items: Array<{ matchId: string; homeScore: number; awayScore: number; qualifiedTeamId?: string }>) => number
   onUpdateResult: (matchId: string, patch: Partial<ProdeMatch>) => void
   onCreateGroup: (name: string) => ProdeGroup | null
 }
@@ -305,8 +305,13 @@ export function ProdeView({
     const items = Object.entries(drafts)
       .map(([matchId, draft]) => draft.home !== '' && draft.away !== '' ? { matchId, homeScore: draft.home, awayScore: draft.away } : null)
       .filter((item): item is { matchId: string; homeScore: number; awayScore: number } => item !== null)
-    onSavePredictions(items)
-    setDrafts({})
+    const savedCount = onSavePredictions(items)
+    if (savedCount > 0) {
+      setDrafts({})
+      setFeedbackMessage(savedCount === 1 ? 'Predicción guardada' : 'Predicciones guardadas')
+    } else {
+      setFeedbackMessage('No se pudo guardar la predicción')
+    }
   }
 
   const createGroup = () => {
@@ -347,7 +352,11 @@ export function ProdeView({
   const saveModalPrediction = () => {
     if (!selectedMatch || modalDraft.home === '' || modalDraft.away === '' || !canSaveModalPrediction) return
     const wasEditing = !!selectedPrediction
-    onSavePredictions([{ matchId: selectedMatch.id, homeScore: modalDraft.home, awayScore: modalDraft.away }])
+    const savedCount = onSavePredictions([{ matchId: selectedMatch.id, homeScore: modalDraft.home, awayScore: modalDraft.away }])
+    if (savedCount <= 0) {
+      setFeedbackMessage('No se pudo guardar la predicción')
+      return
+    }
     setSelectedMatch(null)
     setFeedbackMessage(wasEditing ? 'Predicción actualizada' : 'Predicción guardada')
   }

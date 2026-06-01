@@ -67,6 +67,10 @@ function saveState(userId: string, state: ProdeState) {
   window.localStorage.setItem(`${PROJECT_SLUG}:prode:${userId}`, JSON.stringify(state))
 }
 
+function createId(prefix: string): string {
+  return `${prefix}-${globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`}`
+}
+
 function buildRanking(predictions: ProdePrediction[], userId: string, userName: string, groupId?: string): ProdeRankingEntry[] {
   const seedUsers = [
     { userId, userName },
@@ -127,9 +131,10 @@ export function useProde(userId: string, userName: string) {
     [primaryGroup?.id, state.predictions, userId, userName],
   )
 
-  const savePredictions = (items: Array<{ matchId: string; homeScore: number; awayScore: number; qualifiedTeamId?: string }>) => {
+  const savePredictions = (items: Array<{ matchId: string; homeScore: number; awayScore: number; qualifiedTeamId?: string }>): number => {
     const now = new Date().toISOString()
     const nextPredictions = [...state.predictions]
+    let savedCount = 0
 
     for (const item of items) {
       const match = state.matches.find(m => m.id === item.matchId)
@@ -141,7 +146,7 @@ export function useProde(userId: string, userName: string) {
       })
       const existingIndex = nextPredictions.findIndex(p => p.matchId === item.matchId && p.userId === userId)
       const nextPrediction: ProdePrediction = {
-        id: existingIndex >= 0 ? nextPredictions[existingIndex].id : `pred-${crypto.randomUUID()}`,
+        id: existingIndex >= 0 ? nextPredictions[existingIndex].id : createId('pred'),
         userId,
         userName,
         matchId: item.matchId,
@@ -158,9 +163,14 @@ export function useProde(userId: string, userName: string) {
       }
       if (existingIndex >= 0) nextPredictions[existingIndex] = nextPrediction
       else nextPredictions.push(nextPrediction)
+      savedCount += 1
     }
 
-    persist({ ...state, predictions: nextPredictions })
+    if (savedCount > 0) {
+      persist({ ...state, predictions: nextPredictions })
+    }
+
+    return savedCount
   }
 
   const updateResult = (matchId: string, patch: Partial<ProdeMatch>) => {
