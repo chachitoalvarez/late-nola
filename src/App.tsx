@@ -28,6 +28,7 @@ import {
 } from '@/components/layout/DesktopSidebarNav'
 import { BottomNav } from '@/components/layout/BottomNav'
 import { CelebrationOverlay } from '@/components/overlays/CelebrationOverlay'
+import { OfflineNotice } from '@/components/overlays/OfflineNotice'
 import { ProfileDrawer } from '@/components/drawers/ProfileDrawer'
 import { PublicProfileDrawer } from '@/components/drawers/PublicProfileDrawer'
 import { ChatDrawer } from '@/components/drawers/ChatDrawer'
@@ -172,7 +173,7 @@ function AppShell() {
     if (sessionUserId) updateUserAvatar(sessionUserId, nextAvatarKey)
   }
 
-  if (!authInitialized) return <div className="min-h-screen bg-zinc-50 flex items-center justify-center"><div className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" /></div>
+  if (!authInitialized) return <div className="min-h-dvh bg-zinc-50 flex items-center justify-center"><div className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" /></div>
   if (!isAuthenticated) return <LoginView />
 
   const receivedTradeProposals = tradeProposals.filter(item => item.direction === 'received')
@@ -224,7 +225,7 @@ function AppShell() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50/50 font-sans text-zinc-800 overflow-x-hidden relative">
+    <div className="min-h-dvh bg-zinc-50/50 font-sans text-zinc-800 overflow-x-hidden relative">
       <style>{`
         @keyframes confettiFall {
           0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
@@ -242,6 +243,7 @@ function AppShell() {
         }
       `}</style>
 
+      <OfflineNotice />
       {celebration && <CelebrationOverlay celebration={celebration} />}
       <DesktopSidebarNav
         activeTab={activeTab}
@@ -252,7 +254,7 @@ function AppShell() {
       />
 
       <main
-        className={`min-h-screen w-full p-3 pb-24 transition-[margin,width] duration-200 sm:p-4 md:pb-8 lg:p-6 ${
+        className={`min-h-dvh w-full p-3 pb-[calc(6rem+env(safe-area-inset-bottom))] transition-[margin,width] duration-200 sm:p-4 md:pb-8 lg:p-6 ${
           isDesktopSidebarExpanded
             ? 'md:ml-[224px] md:w-[calc(100vw-224px)]'
             : 'md:ml-[80px] md:w-[calc(100vw-80px)]'

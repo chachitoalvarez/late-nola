@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#F59E0B" />
+    <title>Late Nola sin conexión</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #fafafa;
+        color: #18181b;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        min-height: 100dvh;
+        display: grid;
+        place-items: center;
+        padding: calc(1.5rem + env(safe-area-inset-top)) 1.25rem calc(1.5rem + env(safe-area-inset-bottom));
+      }
+      main {
+        width: min(100%, 420px);
+        border: 1px solid #e4e4e7;
+        border-radius: 1.5rem;
+        background: #fff;
+        padding: 1.5rem;
+        box-shadow: 0 18px 55px rgb(24 24 27 / 0.08);
+      }
+      .icon {
+        width: 3rem;
+        height: 3rem;
+        display: grid;
+        place-items: center;
+        border-radius: 1rem;
+        background: #fef3c7;
+        color: #d97706;
+        font-size: 1.75rem;
+        font-weight: 900;
+      }
+      h1 {
+        margin: 1rem 0 0;
+        font-size: 1.5rem;
+        line-height: 1.1;
+      }
+      p {
+        margin: 0.75rem 0 0;
+        color: #71717a;
+        font-size: 0.95rem;
+        line-height: 1.5;
+        font-weight: 600;
+      }
+      button {
+        margin-top: 1.25rem;
+        width: 100%;
+        min-height: 2.75rem;
+        border: 0;
+        border-radius: 1rem;
+        background: #f59e0b;
+        color: #fff;
+        font: inherit;
+        font-weight: 900;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="icon">LN</div>
+      <h1>Estás sin conexión</h1>
+      <p>Podés seguir viendo la app si ya estaba cargada, pero algunas acciones pueden no estar disponibles.</p>
+      <button type="button" onclick="window.location.reload()">Reintentar</button>
+    </main>
+  </body>
+</html>
