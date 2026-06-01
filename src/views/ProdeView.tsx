@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type RefObject } from 'react'
-import { CalendarDays, Check, ChevronDown, Clipboard, Globe2, Pencil, Plus, Share2, ShieldCheck, Trophy, Users, X } from 'lucide-react'
-import { PRODE_FRIEND_PREDICTIONS } from '@/data/prodeData'
-import { calculatePredictionPoints, formatMatchTime, getEffectiveMatchStatus, isMatchEditable } from '@/lib/prode'
-import type { ProdeGroup, ProdeMatch, ProdePrediction, ProdeRankingEntry } from '@/types/prode'
+import { Check, ChevronDown, Clipboard, Globe2, Pencil, Plus, Share2, ShieldCheck, Users } from 'lucide-react'
+import { getEffectiveMatchStatus, isMatchEditable } from '@/lib/prode'
+import type { MatchStatus, ProdeGroup, ProdeMatch, ProdePrediction, ProdeRankingEntry } from '@/types/prode'
 
 interface Props {
   userId: string
@@ -21,34 +20,16 @@ interface Props {
   onCreateGroup: (name: string) => ProdeGroup | null
 }
 
-type ProdeSection = 'home' | 'fixture' | 'ranking' | 'grupos' | 'admin'
-type MatchStatusFilter = 'all' | 'upcoming' | 'finished'
+type ProdeSection = 'matches' | 'ranking' | 'grupos' | 'admin'
+type PredictionFilter = 'pending' | 'predicted' | 'all'
 type MatchPhaseFilter = 'all' | 'group_stage' | 'round_of_32' | 'round_of_16' | 'quarter_final' | 'semi_final' | 'final'
 type MatchFixtureFilter = MatchPhaseFilter | `group_${string}`
 
 const PRODE_TABS: Array<{ id: ProdeSection; label: string }> = [
-  { id: 'home', label: 'Inicio' },
-  { id: 'fixture', label: 'Fixture' },
+  { id: 'matches', label: 'Partidos' },
   { id: 'ranking', label: 'Ranking' },
   { id: 'grupos', label: 'Grupos' },
   { id: 'admin', label: 'Admin' },
-]
-
-const STATUS_LABELS: Record<string, string> = {
-  open: '',
-  closing_soon: '',
-  locked: 'Predicción cerrada',
-  live: 'En juego',
-  finished: 'Finalizado',
-  points_calculated: 'Finalizado',
-  postponed: 'Postergado',
-  cancelled: 'Cancelado',
-}
-
-const FIXTURE_STATUS_FILTERS: Array<{ id: MatchStatusFilter; label: string }> = [
-  { id: 'all', label: 'Todos' },
-  { id: 'upcoming', label: 'Próximos' },
-  { id: 'finished', label: 'Finalizados' },
 ]
 
 const FIXTURE_PHASE_FILTERS: Array<{ id: MatchFixtureFilter; label: string }> = [
@@ -72,6 +53,46 @@ const FIXTURE_PHASE_FILTERS: Array<{ id: MatchFixtureFilter; label: string }> = 
   { id: 'semi_final', label: 'Semifinales' },
   { id: 'final', label: 'Final' },
 ]
+
+const STATUS_LABELS: Partial<Record<MatchStatus, string>> = {
+  closing_soon: 'Cierra pronto',
+  locked: 'Predicción cerrada',
+  live: 'En juego',
+  finished: 'Finalizado',
+  points_calculated: 'Finalizado',
+  postponed: 'Postergado',
+  cancelled: 'Cancelado',
+}
+
+const FIFA_TO_ISO: Record<string, string> = {
+  ALG: 'DZ',
+  AUT: 'AT',
+  BIH: 'BA',
+  CIV: 'CI',
+  COD: 'CD',
+  CPV: 'CV',
+  CRO: 'HR',
+  CUW: 'CW',
+  CZE: 'CZ',
+  ECU: 'EC',
+  ENG: 'GB',
+  ESP: 'ES',
+  GER: 'DE',
+  KOR: 'KR',
+  KSA: 'SA',
+  MAR: 'MA',
+  NED: 'NL',
+  NOR: 'NO',
+  NZL: 'NZ',
+  PAR: 'PY',
+  POR: 'PT',
+  RSA: 'ZA',
+  SCO: 'GB',
+  SUI: 'CH',
+  SWE: 'SE',
+  TUR: 'TR',
+  URU: 'UY',
+}
 
 function ProdeTabs({
   activeTab,
@@ -109,48 +130,174 @@ function ProdeTabs({
   )
 }
 
-function scoreValue(value: string): number | null {
-  if (value.trim() === '') return null
+function parseScore(value: string): number | '' | null {
+  if (value.trim() === '') return ''
+  if (!/^\d+$/.test(value)) return null
   const numeric = Number(value)
-  return Number.isInteger(numeric) && numeric >= 0 ? numeric : null
+  return Number.isSafeInteger(numeric) && numeric >= 0 ? numeric : null
 }
 
-function MatchScoreInput({ value, onChange, disabled, inputRef, onComplete }: {
+function ScoreInput({
+  value,
+  onChange,
+  disabled,
+  inputRef,
+  onComplete,
+  ariaLabel,
+}: {
   value: number | ''
   onChange: (value: number | '') => void
   disabled?: boolean
   inputRef?: RefObject<HTMLInputElement | null>
   onComplete?: () => void
+  ariaLabel: string
 }) {
   return (
     <input
       ref={inputRef}
+      aria-label={ariaLabel}
       value={value}
       disabled={disabled}
       inputMode="numeric"
       pattern="[0-9]*"
+      placeholder="-"
       onChange={event => {
-        const next = scoreValue(event.target.value)
-        onChange(next ?? '')
-        if (next !== null) onComplete?.()
+        const next = parseScore(event.target.value)
+        if (next === null) return
+        onChange(next)
+        if (next !== '') onComplete?.()
       }}
-      className="h-10 w-12 rounded-xl border border-zinc-200 bg-white text-center text-base font-black text-zinc-900 outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-500/20 disabled:bg-zinc-100 disabled:text-zinc-400"
+      className="h-11 w-12 shrink-0 rounded-xl border border-zinc-200 bg-white text-center text-base font-black text-zinc-900 outline-none transition focus:border-amber-500 focus:ring-4 focus:ring-amber-500/20 disabled:bg-zinc-100 disabled:text-zinc-400"
     />
   )
 }
 
-function getMatchTimeLabel(match: ProdeMatch, now = new Date()): string {
-  const status = getEffectiveMatchStatus(match, now)
+function countryFlag(code: string): string {
+  if (!code) return ''
+  if (code === 'ENG') return '🏴'
+  if (code === 'SCO') return '🏴'
+  const iso = FIFA_TO_ISO[code] ?? code
+  if (!/^[A-Z]{2}$/.test(iso)) return ''
+  return [...iso].map(char => String.fromCodePoint(127397 + char.charCodeAt(0))).join('')
+}
+
+function formatSectionDate(match: ProdeMatch): string {
+  return new Intl.DateTimeFormat('es-AR', {
+    day: 'numeric',
+    month: 'long',
+  }).format(new Date(match.startsAt))
+}
+
+function formatMatchHour(match: ProdeMatch): string {
+  return match.argentinaTime || new Intl.DateTimeFormat('es-AR', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(new Date(match.startsAt))
+}
+
+function matchRoundLabel(match: ProdeMatch): string {
+  return match.groupName ?? match.round
+}
+
+function predictionStatusLabel(match: ProdeMatch, prediction?: ProdePrediction): string {
+  const status = getEffectiveMatchStatus(match)
   if (status === 'live') return 'En juego'
   if (status === 'finished' || status === 'points_calculated') return 'Finalizado'
   if (status === 'locked') return 'Predicción cerrada'
-  if (status === 'postponed' || status === 'cancelled') return STATUS_LABELS[status]
+  if (status === 'postponed' || status === 'cancelled') return STATUS_LABELS[status] ?? ''
+  return prediction ? 'Guardado' : 'Pendiente'
+}
 
-  const diffMinutes = Math.floor((new Date(match.startsAt).getTime() - now.getTime()) / 60000)
-  if (diffMinutes <= 0) return 'Predicción cerrada'
-  if (diffMinutes < 60) return `Cierra en ${diffMinutes} min`
-  if (diffMinutes < 24 * 60) return `Cierra en ${Math.ceil(diffMinutes / 60)} h`
-  return formatMatchTime(match.startsAt)
+function TeamName({ name, flag, align = 'left' }: { name: string; flag: string; align?: 'left' | 'right' }) {
+  return (
+    <div className={`flex min-w-0 items-center gap-2 ${align === 'right' ? 'justify-end text-right' : ''}`}>
+      {align === 'left' && <span className="text-xl leading-none">{flag || '•'}</span>}
+      <span className="min-w-0 text-sm font-black leading-tight text-zinc-900 [overflow-wrap:anywhere] md:text-base">{name}</span>
+      {align === 'right' && <span className="text-xl leading-none">{flag || '•'}</span>}
+    </div>
+  )
+}
+
+function MatchPredictionCard({
+  match,
+  prediction,
+  draft,
+  setDraft,
+  onSave,
+}: {
+  match: ProdeMatch
+  prediction?: ProdePrediction
+  draft?: { home: number | ''; away: number | '' }
+  setDraft: (draft: { home: number | ''; away: number | '' }) => void
+  onSave: (match: ProdeMatch, draft: { home: number | ''; away: number | '' }, wasEditing: boolean) => void
+}) {
+  const homeInputRef = useRef<HTMLInputElement>(null)
+  const awayInputRef = useRef<HTMLInputElement>(null)
+  const editable = isMatchEditable(match)
+  const officialResult = match.homeScore !== undefined && match.awayScore !== undefined
+  const value = draft ?? {
+    home: prediction?.predictedHomeScore ?? '',
+    away: prediction?.predictedAwayScore ?? '',
+  }
+  const label = predictionStatusLabel(match, prediction)
+  const status = getEffectiveMatchStatus(match)
+  const isFinished = status === 'finished' || status === 'points_calculated'
+
+  const updateDraft = (side: 'home' | 'away', nextValue: number | '') => {
+    const nextDraft = { ...value, [side]: nextValue }
+    setDraft(nextDraft)
+    if (!editable || nextDraft.home === '' || nextDraft.away === '') return
+    if (prediction && prediction.predictedHomeScore === nextDraft.home && prediction.predictedAwayScore === nextDraft.away) return
+    onSave(match, nextDraft, !!prediction)
+  }
+
+  return (
+    <article className="rounded-2xl border border-zinc-200 bg-white p-3 shadow-sm transition hover:border-amber-200 md:p-4">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <p className="truncate text-xs font-black uppercase tracking-wider text-zinc-500">{matchRoundLabel(match)}</p>
+        <p className="shrink-0 text-xs font-black text-zinc-500">{formatMatchHour(match)}</p>
+      </div>
+
+      <div className="grid grid-cols-[minmax(0,1fr)_auto_auto_auto_minmax(0,1fr)] items-center gap-2">
+        <TeamName name={match.homeTeamName} flag={countryFlag(match.homeTeamFlag)} />
+        <ScoreInput
+          ariaLabel={`Goles de ${match.homeTeamName}`}
+          value={officialResult ? match.homeScore ?? '' : value.home}
+          disabled={!editable}
+          inputRef={homeInputRef}
+          onComplete={() => awayInputRef.current?.focus()}
+          onChange={home => updateDraft('home', home)}
+        />
+        <span className="text-xs font-black uppercase text-zinc-400">vs</span>
+        <ScoreInput
+          ariaLabel={`Goles de ${match.awayTeamName}`}
+          value={officialResult ? match.awayScore ?? '' : value.away}
+          disabled={!editable}
+          inputRef={awayInputRef}
+          onChange={away => updateDraft('away', away)}
+        />
+        <TeamName name={match.awayTeamName} flag={countryFlag(match.awayTeamFlag)} align="right" />
+      </div>
+
+      <div className="mt-3 flex min-h-5 items-center justify-between gap-3">
+        <p className={`text-xs font-black ${label === 'Guardado' ? 'text-emerald-600' : isFinished ? 'text-amber-600' : editable ? 'text-zinc-500' : 'text-zinc-500'}`}>
+          {label}
+          {isFinished && prediction ? ` · ${prediction.points} pts` : ''}
+        </p>
+        {prediction && editable && !officialResult && (
+          <button
+            type="button"
+            aria-label="Editar predicción"
+            onClick={() => homeInputRef.current?.focus()}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-50 text-amber-600 transition hover:bg-amber-100"
+          >
+            <Pencil className="h-4 w-4" strokeWidth={2.5} />
+          </button>
+        )}
+      </div>
+    </article>
+  )
 }
 
 function RankingRows({ rows }: { rows: ProdeRankingEntry[] }) {
@@ -178,65 +325,9 @@ function RankingRows({ rows }: { rows: ProdeRankingEntry[] }) {
   )
 }
 
-function MatchCard({
-  match,
-  prediction,
-  onOpen,
-  compact = false,
-}: {
-  match: ProdeMatch
-  prediction?: ProdePrediction
-  onOpen: () => void
-  compact?: boolean
-}) {
-  const status = getEffectiveMatchStatus(match)
-  const editable = isMatchEditable(match)
-  const officialResult = match.homeScore !== undefined && match.awayScore !== undefined
-  const timeLabel = getMatchTimeLabel(match)
-  const canEditPrediction = editable && !officialResult
-  return (
-    <button
-      type="button"
-      onClick={onOpen}
-      className={`w-full rounded-3xl border border-zinc-200 bg-white p-4 text-left shadow-sm transition hover:border-amber-200 hover:shadow-md ${compact ? 'space-y-2' : 'space-y-3'}`}
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-xs font-bold uppercase tracking-wider text-zinc-400">{match.matchday} · {match.groupName ?? 'Eliminatorias'}</p>
-          <h3 className="mt-1 truncate text-base font-black text-zinc-900">
-            {match.homeTeamName} vs {match.awayTeamName}
-          </h3>
-        </div>
-        <span className="sr-only">
-          {STATUS_LABELS[status]}
-        </span>
-      </div>
-      <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-zinc-500">
-        <span>{timeLabel}</span>
-      </div>
-      <div className="flex items-center justify-between rounded-2xl bg-zinc-50 px-3 py-2">
-        <div className="text-xs font-bold text-zinc-500">
-          {officialResult ? 'Resultado oficial' : prediction ? `Tu predicción: ${prediction.predictedHomeScore} - ${prediction.predictedAwayScore}` : 'Sin predicción'}
-        </div>
-        <div className="text-sm font-black text-zinc-900">
-          {officialResult
-            ? `${match.homeScore} - ${match.awayScore}`
-            : prediction
-              ? canEditPrediction && <span aria-label="Editar predicción"><Pencil className="h-4 w-4 text-amber-600" strokeWidth={2.5} /></span>
-              : editable ? 'Predecir' : 'Esperando equipos'}
-        </div>
-      </div>
-      {prediction && officialResult && (
-        <p className="text-sm font-black text-amber-600">Sumaste {prediction.points} pts</p>
-      )}
-    </button>
-  )
-}
-
 export function ProdeView({
   userId,
   matches,
-  predictions,
   predictionsByMatch,
   pendingMatches,
   rankingGeneral,
@@ -248,11 +339,9 @@ export function ProdeView({
   onUpdateResult,
   onCreateGroup,
 }: Props) {
-  const [section, setSection] = useState<ProdeSection>('home')
-  const [statusFilter, setStatusFilter] = useState<MatchStatusFilter>('all')
+  const [section, setSection] = useState<ProdeSection>('matches')
+  const [predictionFilter, setPredictionFilter] = useState<PredictionFilter>('pending')
   const [phaseFilter, setPhaseFilter] = useState<MatchFixtureFilter>('all')
-  const [selectedMatch, setSelectedMatch] = useState<ProdeMatch | null>(null)
-  const [modalDraft, setModalDraft] = useState<{ home: number | ''; away: number | '' }>({ home: '', away: '' })
   const [feedbackMessage, setFeedbackMessage] = useState('')
   const [drafts, setDrafts] = useState<Record<string, { home: number | ''; away: number | '' }>>({})
   const [groupName, setGroupName] = useState('')
@@ -264,54 +353,66 @@ export function ProdeView({
     away: '',
     qualifiedTeamId: '',
   })
-  const modalHomeInputRef = useRef<HTMLInputElement>(null)
-  const modalAwayInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (section === 'admin' && !canManageResults) {
-      setSection('home')
+      setSection('matches')
     }
   }, [canManageResults, section])
+
+  useEffect(() => {
+    if (!feedbackMessage) return
+    const timeout = window.setTimeout(() => setFeedbackMessage(''), 1800)
+    return () => window.clearTimeout(timeout)
+  }, [feedbackMessage])
 
   const currentUserRanking = rankingGeneral.find(row => row.userId === userId)
   const currentGroupRanking = groupRanking.find(row => row.userId === userId)
   const selectedRankingGroup = groups.find(group => group.id === rankingGroupFilter) ?? null
   const visibleRanking = rankingGroupFilter === 'all' ? rankingGeneral : groupRanking
-  const nextMatch = [...matches]
-    .filter(match => isMatchEditable(match))
-    .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime())[0]
 
-  const filteredMatches = useMemo(() => {
+  const phaseMatches = useMemo(() => {
     return matches.filter(match => {
-      const status = getEffectiveMatchStatus(match)
       if (phaseFilter.startsWith('group_')) return match.groupCode === phaseFilter.replace('group_', '')
       if (phaseFilter !== 'all' && match.phase !== phaseFilter) return false
-      if (statusFilter === 'upcoming') return ['open', 'closing_soon'].includes(status)
-      if (statusFilter === 'finished') return ['finished', 'points_calculated'].includes(status)
       return true
     })
-  }, [matches, phaseFilter, statusFilter])
+  }, [matches, phaseFilter])
+
+  const filterCounts = useMemo(() => {
+    const pending = phaseMatches.filter(match => isMatchEditable(match) && !predictionsByMatch.has(match.id)).length
+    const predicted = phaseMatches.filter(match => predictionsByMatch.has(match.id)).length
+    return { pending, predicted, all: phaseMatches.length }
+  }, [phaseMatches, predictionsByMatch])
+
+  const filteredMatches = useMemo(() => {
+    return phaseMatches.filter(match => {
+      const hasPrediction = predictionsByMatch.has(match.id)
+      if (predictionFilter === 'pending') return isMatchEditable(match) && !hasPrediction
+      if (predictionFilter === 'predicted') return hasPrediction
+      return true
+    })
+  }, [phaseMatches, predictionFilter, predictionsByMatch])
 
   const groupedMatches = useMemo(() => {
-    const groups = new Map<string, ProdeMatch[]>()
+    const groupsByDate = new Map<string, { title: string; matches: ProdeMatch[] }>()
     for (const match of filteredMatches) {
-      const key = match.matchday
-      groups.set(key, [...(groups.get(key) ?? []), match])
+      const key = match.argentinaDate || match.startsAt.slice(0, 10)
+      const group = groupsByDate.get(key) ?? { title: formatSectionDate(match), matches: [] }
+      group.matches.push(match)
+      groupsByDate.set(key, group)
     }
-    return [...groups.entries()]
+    return [...groupsByDate.values()]
   }, [filteredMatches])
 
-  const saveQuickPredictions = () => {
-    const items = Object.entries(drafts)
-      .map(([matchId, draft]) => draft.home !== '' && draft.away !== '' ? { matchId, homeScore: draft.home, awayScore: draft.away } : null)
-      .filter((item): item is { matchId: string; homeScore: number; awayScore: number } => item !== null)
-    const savedCount = onSavePredictions(items)
-    if (savedCount > 0) {
-      setDrafts({})
-      setFeedbackMessage(savedCount === 1 ? 'Predicción guardada' : 'Predicciones guardadas')
-    } else {
-      setFeedbackMessage('No se pudo guardar la predicción')
+  const saveInlinePrediction = (match: ProdeMatch, draft: { home: number | ''; away: number | '' }, wasEditing: boolean) => {
+    if (draft.home === '' || draft.away === '') return
+    const savedCount = onSavePredictions([{ matchId: match.id, homeScore: draft.home, awayScore: draft.away }])
+    if (savedCount <= 0) {
+      setFeedbackMessage('No pudimos guardar la predicción. Intentá de nuevo.')
+      return
     }
+    setFeedbackMessage(wasEditing ? 'Predicción actualizada' : 'Predicción guardada')
   }
 
   const createGroup = () => {
@@ -321,153 +422,52 @@ export function ProdeView({
     setGroupName('')
   }
 
-  const selectedPrediction = selectedMatch ? predictionsByMatch.get(selectedMatch.id) : null
-  const selectedScoring = selectedMatch && selectedPrediction ? calculatePredictionPoints(selectedMatch, selectedPrediction) : null
-  const selectedStatus = selectedMatch ? getEffectiveMatchStatus(selectedMatch) : null
-  const revealFriends = selectedStatus ? !['open', 'closing_soon'].includes(selectedStatus) : false
-  const selectedMatchEditable = selectedMatch ? isMatchEditable(selectedMatch) : false
-  const selectedHasPrediction = !!selectedPrediction
-  const modalHasScores = modalDraft.home !== '' && modalDraft.away !== ''
-  const modalChanged = selectedPrediction
-    ? modalDraft.home !== selectedPrediction.predictedHomeScore || modalDraft.away !== selectedPrediction.predictedAwayScore
-    : modalHasScores
-  const canSaveModalPrediction = !!selectedMatch && selectedMatchEditable && modalHasScores && modalChanged
-
-  useEffect(() => {
-    if (!selectedMatch) return
-    const prediction = predictionsByMatch.get(selectedMatch.id)
-    setModalDraft({
-      home: prediction?.predictedHomeScore ?? '',
-      away: prediction?.predictedAwayScore ?? '',
-    })
-    requestAnimationFrame(() => modalHomeInputRef.current?.focus())
-  }, [predictionsByMatch, selectedMatch])
-
-  useEffect(() => {
-    if (!feedbackMessage) return
-    const timeout = window.setTimeout(() => setFeedbackMessage(''), 2200)
-    return () => window.clearTimeout(timeout)
-  }, [feedbackMessage])
-
-  const saveModalPrediction = () => {
-    if (!selectedMatch || modalDraft.home === '' || modalDraft.away === '' || !canSaveModalPrediction) return
-    const wasEditing = !!selectedPrediction
-    const savedCount = onSavePredictions([{ matchId: selectedMatch.id, homeScore: modalDraft.home, awayScore: modalDraft.away }])
-    if (savedCount <= 0) {
-      setFeedbackMessage('No se pudo guardar la predicción')
-      return
-    }
-    setSelectedMatch(null)
-    setFeedbackMessage(wasEditing ? 'Predicción actualizada' : 'Predicción guardada')
-  }
+  const predictionFilters: Array<{ id: PredictionFilter; label: string; count: number }> = [
+    { id: 'pending', label: 'Pendientes', count: filterCounts.pending },
+    { id: 'predicted', label: 'Predichos', count: filterCounts.predicted },
+    { id: 'all', label: 'Todos', count: filterCounts.all },
+  ]
 
   return (
-    <div className="animate-in slide-in-from-right-4 space-y-5 duration-300">
+    <div className="animate-in slide-in-from-right-4 space-y-4 duration-300 md:space-y-5">
       {feedbackMessage && (
-        <div className="fixed left-1/2 top-4 z-[70] flex -translate-x-1/2 items-center gap-2 rounded-2xl border border-emerald-200 bg-white px-4 py-2 text-sm font-bold text-emerald-700 shadow-lg">
+        <div className="fixed left-1/2 top-[calc(0.75rem+env(safe-area-inset-top))] z-[70] flex -translate-x-1/2 items-center gap-2 rounded-2xl border border-emerald-200 bg-white px-4 py-2 text-sm font-bold text-emerald-700 shadow-lg">
           <Check className="h-4 w-4" strokeWidth={2.5} />
           {feedbackMessage}
         </div>
       )}
 
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h2 className="text-xl font-black tracking-tight text-zinc-900 md:text-2xl">Prode Late Nola</h2>
+          <p className="text-xs font-bold text-zinc-500 md:text-sm">
+            {pendingMatches.length} predicciones pendientes
+          </p>
+        </div>
+        <div className="hidden rounded-2xl bg-amber-50 px-3 py-2 text-right md:block">
+          <p className="text-xs font-bold uppercase tracking-wider text-amber-700">General</p>
+          <p className="text-lg font-black text-zinc-900">#{currentUserRanking?.position ?? '-'}</p>
+        </div>
+      </div>
+
       <ProdeTabs activeTab={section} canManageResults={canManageResults} onChange={setSection} />
 
-      {section === 'home' && (
-        <div className="grid gap-4 lg:grid-cols-[1.2fr_.8fr]">
-          <div className="space-y-4">
-            {nextMatch && (
-              <div className="rounded-3xl border border-zinc-200 bg-white p-5 shadow-sm">
-                <div className="mb-3 flex items-center gap-2 text-xs font-black uppercase tracking-wider text-amber-600">
-                  <CalendarDays className="h-4 w-4" />
-                  Próximo partido que cierra
-                </div>
-                <MatchCard match={nextMatch} prediction={predictionsByMatch.get(nextMatch.id)} onOpen={() => setSelectedMatch(nextMatch)} compact />
-              </div>
-            )}
-
-            <div className="rounded-3xl border border-zinc-200 bg-white p-5 shadow-sm">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <h3 className="text-lg font-black text-zinc-900">Carga rápida</h3>
-                  <p className="text-sm font-semibold text-zinc-500">
-                    Te faltan {pendingMatches.length} predicciones para completar los partidos disponibles.
-                  </p>
-                </div>
-                <button
-                  onClick={saveQuickPredictions}
-                  disabled={!Object.values(drafts).some(d => d.home !== '' && d.away !== '')}
-                  className="rounded-2xl bg-amber-500 px-4 py-2 text-sm font-black text-white shadow-md disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  Guardar predicciones
-                </button>
-              </div>
-              <div className="mt-4 space-y-2">
-                {pendingMatches.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-zinc-200 p-5 text-center text-sm font-bold text-zinc-500">
-                    Ya cargaste todas las predicciones disponibles por ahora.
-                  </div>
-                ) : pendingMatches.slice(0, 4).map(match => (
-                  <div key={match.id} className="grid grid-cols-[1fr_auto] items-center gap-3 rounded-2xl bg-zinc-50 p-3">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-black text-zinc-900">{match.homeTeamName} vs {match.awayTeamName}</p>
-                      <p className="text-xs font-semibold text-zinc-500">{getMatchTimeLabel(match)}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <MatchScoreInput value={drafts[match.id]?.home ?? ''} onChange={home => setDrafts(prev => ({ ...prev, [match.id]: { home, away: prev[match.id]?.away ?? '' } }))} />
-                      <span className="font-black text-zinc-400">-</span>
-                      <MatchScoreInput value={drafts[match.id]?.away ?? ''} onChange={away => setDrafts(prev => ({ ...prev, [match.id]: { home: prev[match.id]?.home ?? '', away } }))} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <div className="rounded-3xl border border-zinc-200 bg-white p-5 shadow-sm">
-              <div className="flex items-center gap-2 text-sm font-black text-zinc-900">
-                <Trophy className="h-5 w-5 text-amber-500" />
-                Tu posición
-              </div>
-              <div className="mt-4 grid grid-cols-2 gap-3">
-                <div className="rounded-2xl bg-amber-50 p-4">
-                  <p className="text-xs font-bold uppercase tracking-wider text-amber-700">Grupo</p>
-                  <p className="mt-1 text-2xl font-black text-zinc-900">#{currentGroupRanking?.position ?? '-'}</p>
-                  <p className="text-xs font-semibold text-zinc-500">{primaryGroup?.name ?? 'Sin grupo'}</p>
-                </div>
-                <div className="rounded-2xl bg-zinc-50 p-4">
-                  <p className="text-xs font-bold uppercase tracking-wider text-zinc-500">General</p>
-                  <p className="mt-1 text-2xl font-black text-zinc-900">#{currentUserRanking?.position ?? '-'}</p>
-                  <p className="text-xs font-semibold text-zinc-500">{currentUserRanking?.totalPoints ?? 0} pts</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-3xl border border-zinc-200 bg-white p-5 shadow-sm">
-              <h3 className="text-lg font-black text-zinc-900">Actividad reciente</h3>
-              <div className="mt-3 space-y-3">
-                <p className="rounded-2xl bg-zinc-50 p-3 text-sm font-semibold text-zinc-600">Pili acertó marcador exacto y sumó 5 pts.</p>
-                <p className="rounded-2xl bg-zinc-50 p-3 text-sm font-semibold text-zinc-600">Chacho cargó sus predicciones de la Fecha 1.</p>
-                <p className="rounded-2xl bg-zinc-50 p-3 text-sm font-semibold text-zinc-600">
-                  {primaryGroup ? `Estás ${currentGroupRanking?.position ?? '-'}° en ${primaryGroup.name}.` : 'Creá un grupo para competir con tus amigos durante el Mundial.'}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {section === 'fixture' && (
+      {section === 'matches' && (
         <div className="space-y-4">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div className="flex flex-wrap gap-2">
-              {FIXTURE_STATUS_FILTERS.map(item => (
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {predictionFilters.map(item => (
                 <button
                   key={item.id}
-                  onClick={() => setStatusFilter(item.id)}
-                  className={`rounded-2xl px-4 py-2 text-sm font-black ${statusFilter === item.id ? 'bg-amber-500 text-white' : 'bg-white text-zinc-600 border border-zinc-200'}`}
+                  type="button"
+                  onClick={() => setPredictionFilter(item.id)}
+                  className={`shrink-0 rounded-2xl px-4 py-2 text-sm font-black transition ${
+                    predictionFilter === item.id
+                      ? 'bg-amber-500 text-white shadow-sm'
+                      : 'border border-zinc-200 bg-white text-zinc-600'
+                  }`}
                 >
-                  {item.label}
+                  {item.label} <span className="opacity-80">{item.count}</span>
                 </button>
               ))}
             </div>
@@ -476,7 +476,7 @@ export function ProdeView({
               <select
                 value={phaseFilter}
                 onChange={event => setPhaseFilter(event.target.value as MatchFixtureFilter)}
-                className="h-11 w-full appearance-none rounded-2xl border border-zinc-200 bg-zinc-50 px-4 pr-10 text-sm font-bold text-zinc-900 outline-none transition-all focus:border-amber-500 focus:ring-4 focus:ring-amber-500/20"
+                className="h-11 w-full appearance-none rounded-2xl border border-zinc-200 bg-white px-4 pr-10 text-sm font-bold text-zinc-900 outline-none transition-all focus:border-amber-500 focus:ring-4 focus:ring-amber-500/20"
               >
                 {FIXTURE_PHASE_FILTERS.map(item => (
                   <option key={item.id} value={item.id}>{item.label}</option>
@@ -485,12 +485,25 @@ export function ProdeView({
               <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" strokeWidth={2.5} />
             </div>
           </div>
-          {groupedMatches.map(([title, items]) => (
-            <section key={title} className="space-y-3">
-              <h3 className="px-1 text-sm font-black uppercase tracking-wider text-zinc-500">{title}</h3>
-              <div className="grid gap-3 md:grid-cols-2">
-                {items.map(match => (
-                  <MatchCard key={match.id} match={match} prediction={predictionsByMatch.get(match.id)} onOpen={() => setSelectedMatch(match)} />
+
+          {groupedMatches.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-zinc-200 bg-white p-6 text-center">
+              <p className="text-sm font-black text-zinc-800">No hay partidos para este filtro.</p>
+              <p className="mt-1 text-sm font-semibold text-zinc-500">Probá con Predichos o Todos.</p>
+            </div>
+          ) : groupedMatches.map(group => (
+            <section key={group.title} className="space-y-2">
+              <h3 className="px-1 text-sm font-black capitalize text-zinc-500">{group.title}</h3>
+              <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+                {group.matches.map(match => (
+                  <MatchPredictionCard
+                    key={match.id}
+                    match={match}
+                    prediction={predictionsByMatch.get(match.id)}
+                    draft={drafts[match.id]}
+                    setDraft={draft => setDrafts(prev => ({ ...prev, [match.id]: draft }))}
+                    onSave={saveInlinePrediction}
+                  />
                 ))}
               </div>
             </section>
@@ -500,6 +513,19 @@ export function ProdeView({
 
       {section === 'ranking' && (
         <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3 md:max-w-lg">
+            <div className="rounded-2xl bg-amber-50 p-4">
+              <p className="text-xs font-bold uppercase tracking-wider text-amber-700">Grupo</p>
+              <p className="mt-1 text-2xl font-black text-zinc-900">#{currentGroupRanking?.position ?? '-'}</p>
+              <p className="text-xs font-semibold text-zinc-500">{primaryGroup?.name ?? 'Sin grupo'}</p>
+            </div>
+            <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-zinc-200">
+              <p className="text-xs font-bold uppercase tracking-wider text-zinc-500">General</p>
+              <p className="mt-1 text-2xl font-black text-zinc-900">#{currentUserRanking?.position ?? '-'}</p>
+              <p className="text-xs font-semibold text-zinc-500">{currentUserRanking?.totalPoints ?? 0} pts</p>
+            </div>
+          </div>
+
           <div className="flex flex-col gap-3 rounded-3xl border border-zinc-200/60 bg-white p-4 shadow-sm md:flex-row md:items-center md:justify-between">
             <div className="relative w-full md:max-w-sm">
               <Globe2 className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-blue-600" strokeWidth={2.5} />
@@ -609,8 +635,8 @@ export function ProdeView({
             >
               {matches.map(match => <option key={match.id} value={match.id}>{match.homeTeamName} vs {match.awayTeamName}</option>)}
             </select>
-            <MatchScoreInput value={adminDraft.home} onChange={home => setAdminDraft(prev => ({ ...prev, home }))} />
-            <MatchScoreInput value={adminDraft.away} onChange={away => setAdminDraft(prev => ({ ...prev, away }))} />
+            <ScoreInput ariaLabel="Goles local" value={adminDraft.home} onChange={home => setAdminDraft(prev => ({ ...prev, home }))} />
+            <ScoreInput ariaLabel="Goles visitante" value={adminDraft.away} onChange={away => setAdminDraft(prev => ({ ...prev, away }))} />
             <button
               onClick={() => {
                 if (adminDraft.home === '' || adminDraft.away === '') return
@@ -628,89 +654,6 @@ export function ProdeView({
             >
               Finalizar partido
             </button>
-          </div>
-        </div>
-      )}
-
-      {selectedMatch && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-zinc-950/40 p-0 md:items-center md:p-6" onClick={() => setSelectedMatch(null)}>
-          <div className="max-h-[86vh] w-full max-w-2xl overflow-y-auto rounded-t-[2rem] bg-white p-5 shadow-2xl md:rounded-[2rem]" onClick={event => event.stopPropagation()}>
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-xs font-black uppercase tracking-wider text-amber-600">{selectedMatch.matchday}</p>
-                <h3 className="mt-1 text-2xl font-black text-zinc-900">{selectedMatch.homeTeamName} vs {selectedMatch.awayTeamName}</h3>
-                <p className="mt-1 text-sm font-semibold text-zinc-500">{getMatchTimeLabel(selectedMatch)}</p>
-              </div>
-              <button
-                onClick={() => setSelectedMatch(null)}
-                aria-label="Cerrar"
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-zinc-500 transition hover:bg-zinc-200 hover:text-zinc-900"
-              >
-                <X className="h-4 w-4" strokeWidth={2.5} />
-              </button>
-            </div>
-
-            <div className="mt-5 rounded-2xl bg-zinc-50 p-4">
-              <p className="text-sm font-black text-zinc-900">Tu predicción</p>
-              {!selectedPrediction && (
-                <p className="mt-2 text-sm font-semibold text-zinc-500">Todavía no cargaste predicción para este partido.</p>
-              )}
-              <div className="mt-4 flex flex-wrap items-center gap-2">
-                <MatchScoreInput
-                  value={modalDraft.home}
-                  disabled={!selectedMatchEditable}
-                  inputRef={modalHomeInputRef}
-                  onComplete={() => modalAwayInputRef.current?.focus()}
-                  onChange={home => setModalDraft(prev => ({ ...prev, home }))}
-                />
-                <span className="font-black text-zinc-400">-</span>
-                <MatchScoreInput
-                  value={modalDraft.away}
-                  disabled={!selectedMatchEditable}
-                  inputRef={modalAwayInputRef}
-                  onChange={away => setModalDraft(prev => ({ ...prev, away }))}
-                />
-                <button
-                  onClick={saveModalPrediction}
-                  disabled={!canSaveModalPrediction}
-                  className="ml-auto rounded-2xl bg-amber-500 px-4 py-2 text-sm font-black text-white transition disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  {selectedHasPrediction ? 'Guardar cambios' : 'Guardar predicción'}
-                </button>
-              </div>
-              {!selectedMatchEditable && (
-                <p className="mt-3 text-sm font-bold text-zinc-500">Predicción cerrada</p>
-              )}
-            </div>
-            {selectedMatch.homeScore !== undefined && selectedMatch.awayScore !== undefined && (
-              <div className="mt-4 rounded-3xl bg-amber-50 p-4">
-                <p className="text-sm font-black text-zinc-900">Resultado oficial: {selectedMatch.homeScore} - {selectedMatch.awayScore}</p>
-                {selectedScoring && <p className="mt-1 text-sm font-semibold text-amber-700">{selectedScoring.explanation}</p>}
-              </div>
-            )}
-
-            <div className="mt-5">
-              <h4 className="text-sm font-black uppercase tracking-wider text-zinc-500">Predicciones de amigos</h4>
-              {groups.length === 0 ? (
-                <p className="mt-2 text-sm font-semibold text-zinc-500">
-                  Sumate a un grupo para ver predicciones de amigos.
-                </p>
-              ) : !revealFriends ? (
-                <p className="mt-2 rounded-2xl bg-zinc-50 p-4 text-sm font-semibold text-zinc-600">
-                  Se revelan cuando cierre el partido.
-                </p>
-              ) : (
-                <div className="mt-2 overflow-hidden rounded-2xl border border-zinc-200">
-                  {[...PRODE_FRIEND_PREDICTIONS, ...predictions].filter(p => p.matchId === selectedMatch.id).map(prediction => (
-                    <div key={prediction.id} className="grid grid-cols-[1fr_auto_auto] gap-3 border-b border-zinc-100 px-4 py-3 text-sm last:border-b-0">
-                      <span className="font-bold text-zinc-900">{prediction.userName}</span>
-                      <span className="font-black text-zinc-700">{prediction.predictedHomeScore} - {prediction.predictedAwayScore}</span>
-                      <span className="font-black text-amber-600">{prediction.points} pts</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
           </div>
         </div>
       )}
