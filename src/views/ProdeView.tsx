@@ -15,9 +15,11 @@ interface Props {
   primaryGroup: Group | null
   groupRanking: ProdeRankingEntry[]
   groups: Group[]
+  rankingGroupFilter: string
   canManageResults: boolean
   onSavePredictions: (items: Array<{ matchId: string; homeScore: number; awayScore: number; qualifiedTeamId?: string }>) => number
   onUpdateResult: (matchId: string, patch: Partial<ProdeMatch>) => void
+  onRankingGroupChange: (value: string) => void
   onManageGroups: () => void
 }
 
@@ -388,9 +390,11 @@ export function ProdeView({
   primaryGroup,
   groupRanking,
   groups,
+  rankingGroupFilter,
   canManageResults,
   onSavePredictions,
   onUpdateResult,
+  onRankingGroupChange,
   onManageGroups,
 }: Props) {
   const [section, setSection] = useState<ProdeSection>('matches')
@@ -400,7 +404,6 @@ export function ProdeView({
   const [drafts, setDrafts] = useState<Record<string, ScoreDraft>>({})
   const [recentlyCompleted, setRecentlyCompleted] = useState<Record<string, boolean>>({})
   const [leavingPending, setLeavingPending] = useState<Record<string, boolean>>({})
-  const [rankingGroupFilter, setRankingGroupFilter] = useState('all')
   const cardRefs = useRef<Record<string, HTMLElement | null>>({})
   const homeInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
   const removeTimers = useRef<Record<string, number[]>>({})
@@ -650,7 +653,7 @@ export function ProdeView({
               <Globe2 className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-blue-600" strokeWidth={2.5} />
               <select
                 value={rankingGroupFilter}
-                onChange={event => setRankingGroupFilter(event.target.value)}
+                onChange={event => onRankingGroupChange(event.target.value)}
                 className="h-12 w-full appearance-none rounded-2xl border border-zinc-200 bg-zinc-50 pl-11 pr-11 text-sm font-semibold text-zinc-900 transition-all focus:border-amber-500 focus:outline-none focus:ring-4 focus:ring-amber-500/20 md:h-11"
               >
                 <option value="all">Todos (Global)</option>
