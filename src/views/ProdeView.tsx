@@ -32,7 +32,6 @@ type ScoreDraft = { home: number | ''; away: number | '' }
 const PRODE_TABS: Array<{ id: ProdeSection; label: string }> = [
   { id: 'matches', label: 'Partidos' },
   { id: 'ranking', label: 'Ranking' },
-  { id: 'grupos', label: 'Grupos' },
   { id: 'admin', label: 'Admin' },
 ]
 
