@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { PRODE_FRIEND_PREDICTIONS, PRODE_MATCHES } from '@/data/prodeData'
 import { PROJECT_SLUG } from '@/lib/constants'
 import { calculatePredictionPoints, getEffectiveMatchStatus } from '@/lib/prode'
+import { listMyProdePredictions, saveMyProdePredictions } from '@/services/prode.service'
 import type { ProdeGroup, ProdeGroupMember, ProdeMatch, ProdePrediction, ProdeRankingEntry, ResultAuditLog } from '@/types/prode'
 
 interface ProdeState {
@@ -71,6 +72,21 @@ function createId(prefix: string): string {
   return `${prefix}-${globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`}`
 }
 
+function isKnownPrediction(prediction: ProdePrediction): boolean {
+  return PRODE_MATCHES.some(match => match.id === prediction.matchId)
+}
+
+function mergePredictions(localPredictions: ProdePrediction[], remotePredictions: ProdePrediction[]): ProdePrediction[] {
+  const byMatch = new Map<string, ProdePrediction>()
+  for (const prediction of [...localPredictions, ...remotePredictions].filter(isKnownPrediction)) {
+    const current = byMatch.get(prediction.matchId)
+    if (!current || new Date(prediction.updatedAt).getTime() >= new Date(current.updatedAt).getTime()) {
+      byMatch.set(prediction.matchId, prediction)
+    }
+  }
+  return [...byMatch.values()]
+}
+
 function buildRanking(predictions: ProdePrediction[], userId: string, userName: string, groupId?: string): ProdeRankingEntry[] {
   const seedUsers = [
     { userId, userName },
@@ -100,6 +116,7 @@ function buildRanking(predictions: ProdePrediction[], userId: string, userName: 
 
 export function useProde(userId: string, userName: string) {
   const [state, setState] = useState<ProdeState>(() => loadState(userId))
+  const loadedBackendUserRef = useRef<string | null>(null)
 
   const persist = (nextState: ProdeState) => {
     setState(nextState)
@@ -130,6 +147,29 @@ export function useProde(userId: string, userName: string) {
     () => buildRanking(state.predictions, userId, userName, primaryGroup?.id),
     [primaryGroup?.id, state.predictions, userId, userName],
   )
+
+  useEffect(() => {
+    if (!userId || loadedBackendUserRef.current === userId) return
+    loadedBackendUserRef.current = userId
+    let cancelled = false
+
+    listMyProdePredictions(userName).then(({ data, error }) => {
+      if (cancelled || error) return
+      setState(prev => {
+        const mergedPredictions = mergePredictions(prev.predictions, data)
+        const nextState = { ...prev, predictions: mergedPredictions }
+        saveState(userId, nextState)
+        if (prev.predictions.length > 0 && data.length < mergedPredictions.length) {
+          saveMyProdePredictions(mergedPredictions, userName)
+        }
+        return nextState
+      })
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [userId, userName])
 
   const savePredictions = (items: Array<{ matchId: string; homeScore: number; awayScore: number; qualifiedTeamId?: string }>): number => {
     const now = new Date().toISOString()
@@ -168,6 +208,20 @@ export function useProde(userId: string, userName: string) {
 
     if (savedCount > 0) {
       persist({ ...state, predictions: nextPredictions })
+      void saveMyProdePredictions(
+        nextPredictions.filter(prediction =>
+          items.some(item => item.matchId === prediction.matchId && prediction.userId === userId)
+        ),
+        userName,
+      ).then(({ data, error }) => {
+        if (error || data.length === 0) return
+        setState(prev => {
+          const mergedPredictions = mergePredictions(prev.predictions, data)
+          const nextState = { ...prev, predictions: mergedPredictions }
+          saveState(userId, nextState)
+          return nextState
+        })
+      })
     }
 
     return savedCount
