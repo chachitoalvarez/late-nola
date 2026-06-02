@@ -363,13 +363,13 @@ function AppShell() {
                   predictionsByMatch={prode.predictionsByMatch}
                   pendingMatches={prode.pendingMatches}
                   rankingGeneral={prode.rankingGeneral}
-                  primaryGroup={prode.primaryGroup}
+                  primaryGroup={groups[0] ?? null}
                   groupRanking={prode.groupRanking}
-                  groups={prode.groups}
+                  groups={groups}
                   canManageResults={canManageProde}
                   onSavePredictions={prode.savePredictions}
                   onUpdateResult={canManageProde ? prode.updateResult : () => undefined}
-                  onCreateGroup={prode.createGroup}
+                  onManageGroups={() => setActiveTab('comparar')}
                 />
               )}
 

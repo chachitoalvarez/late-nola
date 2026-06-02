@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type Ref } from 'react'
-import { Check, ChevronDown, Clipboard, Globe2, Pencil, Plus, Share2, ShieldCheck, Users } from 'lucide-react'
+import { Check, ChevronDown, Globe2, Pencil, Plus, ShieldCheck, Users } from 'lucide-react'
 import { getEffectiveMatchStatus, isMatchEditable } from '@/lib/prode'
-import type { MatchStatus, ProdeGroup, ProdeMatch, ProdePrediction, ProdeRankingEntry } from '@/types/prode'
+import type { Group } from '@/types/group'
+import type { MatchStatus, ProdeMatch, ProdePrediction, ProdeRankingEntry } from '@/types/prode'
 
 interface Props {
   userId: string
@@ -11,13 +12,13 @@ interface Props {
   predictionsByMatch: Map<string, ProdePrediction>
   pendingMatches: ProdeMatch[]
   rankingGeneral: ProdeRankingEntry[]
-  primaryGroup: ProdeGroup | null
+  primaryGroup: Group | null
   groupRanking: ProdeRankingEntry[]
-  groups: ProdeGroup[]
+  groups: Group[]
   canManageResults: boolean
   onSavePredictions: (items: Array<{ matchId: string; homeScore: number; awayScore: number; qualifiedTeamId?: string }>) => number
   onUpdateResult: (matchId: string, patch: Partial<ProdeMatch>) => void
-  onCreateGroup: (name: string) => ProdeGroup | null
+  onManageGroups: () => void
 }
 
 type ProdeSection = 'matches' | 'ranking' | 'grupos' | 'admin'
@@ -391,7 +392,7 @@ export function ProdeView({
   canManageResults,
   onSavePredictions,
   onUpdateResult,
-  onCreateGroup,
+  onManageGroups,
 }: Props) {
   const [section, setSection] = useState<ProdeSection>('matches')
   const [predictionFilter, setPredictionFilter] = useState<PredictionFilter>('pending')
@@ -400,9 +401,7 @@ export function ProdeView({
   const [drafts, setDrafts] = useState<Record<string, ScoreDraft>>({})
   const [recentlyCompleted, setRecentlyCompleted] = useState<Record<string, boolean>>({})
   const [leavingPending, setLeavingPending] = useState<Record<string, boolean>>({})
-  const [groupName, setGroupName] = useState('')
   const [rankingGroupFilter, setRankingGroupFilter] = useState('all')
-  const [lastCreatedGroup, setLastCreatedGroup] = useState<ProdeGroup | null>(null)
   const cardRefs = useRef<Record<string, HTMLElement | null>>({})
   const homeInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
   const removeTimers = useRef<Record<string, number[]>>({})
@@ -529,13 +528,6 @@ export function ProdeView({
       schedulePendingRemoval(match.id)
     }
     setFeedbackMessage(wasEditing ? 'Predicción actualizada' : 'Predicción guardada')
-  }
-
-  const createGroup = () => {
-    const group = onCreateGroup(groupName)
-    if (!group) return
-    setLastCreatedGroup(group)
-    setGroupName('')
   }
 
   const predictionFilters: Array<{ id: PredictionFilter; label: string; count: number }> = [
@@ -676,7 +668,7 @@ export function ProdeView({
 
             <button
               type="button"
-              onClick={() => setSection('grupos')}
+              onClick={onManageGroups}
               className="flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-amber-500 px-5 text-sm font-black text-white shadow-sm transition-all hover:bg-amber-600 hover:shadow-lg md:w-auto"
             >
               <Plus className="h-5 w-5" strokeWidth={2.5} />
@@ -698,39 +690,14 @@ export function ProdeView({
           <div className="rounded-3xl border border-zinc-200 bg-white p-5 shadow-sm">
             <div className="flex items-center gap-2">
               <Users className="h-5 w-5 text-amber-500" />
-              <h3 className="text-lg font-black text-zinc-900">Crear grupo</h3>
+              <h3 className="text-lg font-black text-zinc-900">Grupos compartidos</h3>
             </div>
-            <input
-              value={groupName}
-              onChange={event => setGroupName(event.target.value)}
-              placeholder="Los gorditos del Mundial"
-              className="mt-4 h-12 w-full rounded-2xl border border-zinc-200 px-4 text-sm font-bold outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-500/20"
-            />
-            <button onClick={createGroup} className="mt-3 h-12 w-full rounded-2xl bg-amber-500 font-black text-white shadow-md">
-              Crear grupo
+            <p className="mt-2 text-sm font-semibold text-zinc-500">
+              El Prode usa los mismos grupos que comparás para figuritas.
+            </p>
+            <button onClick={onManageGroups} className="mt-4 h-12 w-full rounded-2xl bg-amber-500 font-black text-white shadow-md">
+              Crear o gestionar grupos
             </button>
-            {lastCreatedGroup && (
-              <div className="mt-4 rounded-2xl bg-amber-50 p-4">
-                <p className="text-sm font-black text-zinc-900">Grupo creado</p>
-                <p className="mt-1 text-xs font-semibold text-zinc-600">Compartí el código {lastCreatedGroup.inviteCode} con tus amigos.</p>
-                <div className="mt-3 flex gap-2">
-                  <a
-                    href={`https://wa.me/?text=${encodeURIComponent(`Sumate a mi grupo de Prode Late Nola: ${window.location.origin}/prode?grupo=${lastCreatedGroup.inviteCode}`)}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-3 py-2 text-xs font-black text-white"
-                  >
-                    <Share2 className="h-4 w-4" /> WhatsApp
-                  </a>
-                  <button
-                    onClick={() => navigator.clipboard?.writeText(`${window.location.origin}/prode?grupo=${lastCreatedGroup.inviteCode}`)}
-                    className="inline-flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-xs font-black text-zinc-700"
-                  >
-                    <Clipboard className="h-4 w-4" /> Copiar link
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
           <div className="rounded-3xl border border-zinc-200 bg-white p-5 shadow-sm">
             <h3 className="text-lg font-black text-zinc-900">Tus grupos</h3>
@@ -740,7 +707,7 @@ export function ProdeView({
               ) : groups.map(group => (
                 <div key={group.id} className="rounded-2xl bg-zinc-50 p-4">
                   <p className="font-black text-zinc-900">{group.name}</p>
-                  <p className="text-xs font-semibold text-zinc-500">Código de invitación: {group.inviteCode}</p>
+                  <p className="text-xs font-semibold text-zinc-500">{group.members.length} integrantes</p>
                 </div>
               ))}
             </div>
