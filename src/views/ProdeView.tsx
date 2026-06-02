@@ -371,7 +371,6 @@ function RankingRows({ rows }: { rows: ProdeRankingEntry[] }) {
           <div className="text-sm font-black text-amber-600">#{row.position}</div>
           <div className="min-w-0">
             <p className="truncate text-sm font-black text-zinc-900">@{row.userName}</p>
-            <p className="text-xs font-semibold text-zinc-500">{row.exactHits} exactos · {row.outcomeHits} aciertos · {row.predictionsCount} predicciones</p>
           </div>
           <div className="text-right text-lg font-black text-zinc-900">{row.totalPoints} pts</div>
         </div>
