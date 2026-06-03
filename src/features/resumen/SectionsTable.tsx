@@ -53,11 +53,6 @@ export function SectionsTable({ data, searchTerm, onGoToDetail }: Props) {
                   <div className="flex items-center gap-3">
                     <SectionAvatar section={item} />
                     <span>{item.section}</span>
-                    {isExtra && (
-                      <span className="px-2 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-200 text-[10px] font-black uppercase tracking-wide">
-                        Extra
-                      </span>
-                    )}
                   </div>
                 </td>
                 <td className="px-6 py-3 lg:py-2.5 whitespace-nowrap text-sm text-center font-medium">

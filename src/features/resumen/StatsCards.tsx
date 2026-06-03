@@ -45,24 +45,24 @@ export function StatsCards({ stats, unlockedAchievementsCount, totalAchievements
         icon={<CircleGauge className="h-6 w-6 lg:h-5 lg:w-5" strokeWidth={2.5} />}
         iconClassName="bg-amber-50 text-amber-600 border-amber-100"
         label="Avance"
-        value={`${stats.basePercentage}%`}
-        ariaLabel={`Avance del album base: ${stats.basePercentage} por ciento`}
+        value={`${stats.percentage}%`}
+        ariaLabel={`Avance total: ${stats.percentage} por ciento`}
       />
 
       <MetricCard
         icon={<Package className="h-6 w-6 lg:h-5 lg:w-5" strokeWidth={2.5} />}
         iconClassName="bg-emerald-50 text-emerald-600 border-emerald-100"
         label="Pegadas"
-        value={stats.baseCompleted}
-        ariaLabel={`Figuritas pegadas del album base: ${stats.baseCompleted} de ${stats.baseNeeded}`}
+        value={stats.totalCompleted}
+        ariaLabel={`Figuritas pegadas: ${stats.totalCompleted} de ${stats.totalNeeded}`}
       />
 
       <MetricCard
         icon={<Layers className="h-6 w-6 lg:h-5 lg:w-5" strokeWidth={2.5} />}
         iconClassName="bg-orange-50 text-orange-600 border-orange-100"
         label="Repetidas"
-        value={stats.baseRepeated}
-        ariaLabel={`Figuritas repetidas del album base: ${stats.baseRepeated}`}
+        value={stats.totalRepeated}
+        ariaLabel={`Figuritas repetidas: ${stats.totalRepeated}`}
       />
 
       <MetricCard

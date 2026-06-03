@@ -24,7 +24,13 @@ export function getSectionRepeatedCount(section: AlbumSection): number {
 
 export function getSectionPercentage(section: AlbumSection): number {
   const unique = getSectionUniqueCount(section)
-  return Math.round((unique / section.needed) * 100)
+  return getCompletionPercentage(unique, section.needed)
+}
+
+function getCompletionPercentage(completed: number, needed: number): number {
+  if (needed === 0) return 0
+  if (completed >= needed) return 100
+  return Math.floor((completed / needed) * 100)
 }
 
 export function computeStats(albumData: AlbumSection[]): AlbumStats {
@@ -47,9 +53,9 @@ export function computeStats(albumData: AlbumSection[]): AlbumStats {
   const extrasCompleted = extraSections.reduce((acc, curr) => acc + getSectionUniqueCount(curr), 0)
   const extrasRepeated = extraSections.reduce((acc, curr) => acc + getSectionRepeatedCount(curr), 0)
 
-  const percentage = totalNeeded === 0 ? 0 : Math.round((totalCompleted / totalNeeded) * 100)
-  const basePercentage = baseNeeded === 0 ? 0 : Math.round((baseCompleted / baseNeeded) * 100)
-  const extrasPercentage = extrasNeeded === 0 ? 0 : Math.round((extrasCompleted / extrasNeeded) * 100)
+  const percentage = getCompletionPercentage(totalCompleted, totalNeeded)
+  const basePercentage = getCompletionPercentage(baseCompleted, baseNeeded)
+  const extrasPercentage = getCompletionPercentage(extrasCompleted, extrasNeeded)
 
   return {
     totalNeeded,
