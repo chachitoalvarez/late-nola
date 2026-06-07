@@ -130,8 +130,8 @@ function ProdeTabs({
   const tabs = PRODE_TABS.filter(tab => canManageResults || tab.id !== 'admin')
 
   return (
-    <div className="-mx-1 overflow-x-auto border-b border-zinc-100 px-1 pb-1">
-      <div className="flex min-w-max items-end gap-1.5 lg:gap-2">
+    <div className="-mx-1 border-b border-zinc-100 px-1 pb-1">
+      <div className="flex w-full items-end gap-1.5 lg:gap-2">
         {tabs.map(tab => {
           const isActive = activeTab === tab.id
           return (
@@ -139,7 +139,7 @@ function ProdeTabs({
               key={tab.id}
               type="button"
               onClick={() => onChange(tab.id)}
-              className={`rounded-t-xl border-b-2 px-3 py-2 text-xs font-bold transition-all lg:text-sm ${
+              className={`flex-1 basis-0 rounded-t-xl border-b-2 px-3 py-2 text-center text-xs font-bold transition-all lg:text-sm ${
                 isActive
                   ? 'border-amber-500 bg-amber-50/40 text-amber-600'
                   : 'border-transparent text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800'
